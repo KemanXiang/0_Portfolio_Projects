@@ -52,6 +52,8 @@ Each project folder contains supporting materials such as:
 | 📱 [Bellabeat Smart Device Usage Analysis]([./Project_2_BusinessAnalysis_Bellabeat_R](https://github.com/KemanXiang/Portfolio_Projects/tree/main/07Bellabeat_Smart_Device_Usage_Analysis_R))                                                  | Behavioral analytics project examining activity and sleep patterns using wearable device data.                                                                                                | Statistical Analysis, Correlation Analysis, Visualization | R, R Markdown                                          |
 | 🏷️ [Brand Management & Consumer Perception Thesis]([./Project_8_Undergraduate_Thesis_Brand_Management](https://github.com/KemanXiang/Portfolio_Projects/tree/main/08Undergraduate_Thesis_Brand_Management))                                | Empirical business research examining relationships between brand management dimensions and consumer perception.                                                                              | Survey Analysis, OLS Regression, Research Methods         | Stata, Excel                                           |
 | 🌱 [Global CO₂ Emissions Visualization]([./Project_1_Visualization_CO2_Emission_Tableau](https://github.com/KemanXiang/Portfolio_Projects/tree/main/05Visualization_CO2_Emmission_Tableau))                                               | Tableau visualization portfolio exploring global emissions through geographic, temporal, and integrated datasets.                                                                             | Dashboard Design, Data Integration, Visual Analytics      | Tableau, Excel                                         |
+| 🔄 **Market Share Dynamics & Intervention Simulation — Markov-Chain Analysis** | Markov-chain simulation of Coke–Pepsi customer switching over 52 weeks, comparing baseline market-share dynamics with advertising and periodic coupon interventions and evaluating their market-share and economic effects. | Markov-Chain Modeling, Dynamic Simulation, Intervention Analysis | Excel, Simulation Modeling, Data Visualization |
+| ☀️ **Barstow Commercial Solar PV & Battery Energy Storage Techno-Economic Analysis** | Techno-economic analysis integrating commercial utility/load data, PV generation modeling, battery sizing, scenario comparison, and financial evaluation to support solar-plus-storage investment decisions. | Load Analysis, PV/ESS Sizing, Scenario Analysis, Financial Modeling | Excel, Energy Modeling, Financial Analysis, Data Visualization |
 
 ---
 
@@ -59,48 +61,59 @@ Each project folder contains supporting materials such as:
 
 ```text
 Portfolio_Projects/
-
 │
-├── Project_1_Visualization_CO2_Emission_Tableau/
-│   ├── README.md
-│   ├── Tableau dashboards
-│   └── Supporting files
-│
-├── Project_2_BusinessAnalysis_Bellabeat_R/
-│   ├── README.md
-│   ├── R Markdown notebook
-│   └── Report
-│
-├── Project_3_FinancialAnalysis_JNJ_PG_Excel/
-│   ├── README.md
-│   ├── Excel analysis files
-│   └── Report
-│
-├── Project_4_RegressionAnalysis_Automobile_Pricing_Python/
+├── 01SpaceX_Falcon9_1st_Stage_Success_Landing_Prediction_Python/
 │   ├── README.md
 │   ├── Jupyter notebooks
-│   └── Report
+│   ├── Dashboard / visualizations
+│   └── Research report
 │
-├── Project_5_Visualization_Canada_Immigration_Python/
+├── 02Regression_Analysis_Automobile_Pricing_Python/
+│   ├── README.md
+│   ├── Jupyter notebooks
+│   └── Research report
+│
+├── 03Machine_Learning_Predicting_Daily_Rainfall_Melbourne_Python/
+│   ├── README.md
+│   ├── Machine-learning notebooks
+│   └── Research report
+│
+├── 04Visualization_Canada_Immigration_Analytics_Python/
 │   ├── README.md
 │   ├── Python notebooks
 │   └── Visualization outputs
 │
-├── Project_6_MachineLearning_Rainfall_Prediction_Classifier_Python/
+├── 05Visualization_CO2_Emmission_Tableau/
 │   ├── README.md
-│   ├── Machine learning notebooks
-│   └── Report
+│   ├── Tableau workbooks / dashboards
+│   └── Supporting data
 │
-├── Project_7_Complete_Data_Analysis_SpaceX_Python/
+├── 06Financial_Analytics_JNJ_vs_PG_Excel/
 │   ├── README.md
-│   ├── Data analysis notebooks
-│   ├── Dashboard
+│   ├── Excel analysis files
 │   └── Research report
 │
-└── Project_8_Undergraduate_Thesis_Brand_Management/
+├── 07Bellabeat_Smart_Device_Usage_Analysis_R/
+│   ├── README.md
+│   ├── R / R Markdown analysis
+│   └── Analytical report
+│
+├── 08Undergraduate_Thesis_Brand_Management/
+│   ├── README.md
+│   ├── English thesis
+│   ├── Stata replication materials
+│   └── Supporting datasets
+│
+├── 09Market_Share_Dynamics_Intervention_Simulation/
+│   ├── README.md
+│   ├── Excel simulation model
+│   └── Project documentation
+│
+└── 10Barstow_Commercial_Solar/
     ├── README.md
-    ├── Thesis
-    └── Replication materials
+    ├── Excel techno-economic model
+    ├── Research-style report
+    └── Supporting project documentation
 ```
 
 ---
@@ -111,7 +124,9 @@ Across these projects, I explore how quantitative methods can support:
 
 * Business decision-making
 * Predictive analytics
+* Simulation and intervention analysis
 * Operational improvement
+* Techno-economic and financial modeling
 * Strategic analysis
 * Data-driven research
 
