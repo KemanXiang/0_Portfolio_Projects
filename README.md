@@ -20,11 +20,12 @@ Welcome to my analytics portfolio.
 
 This repository contains research-oriented data analytics projects developed at the intersection of **business analytics, data science, and quantitative research**.
 
-The projects demonstrate an end-to-end analytical workflow, including:
+Across 11 selected projects, the portfolio demonstrates analytical workflows and modeling approaches, including:
 
 * Data collection and preparation
 * Exploratory data analysis (EDA)
 * Statistical modeling
+* Monte Carlo simulation and stochastic dynamic modeling
 * Machine learning
 * Data visualization
 * Business interpretation
@@ -32,7 +33,7 @@ The projects demonstrate an end-to-end analytical workflow, including:
 
 Each project folder contains supporting materials such as:
 
-* Jupyter notebooks / R Markdown files
+* Jupyter notebooks / R Markdown files / Excel simulation workbooks
 * Analytical reports
 * Datasets or data documentation
 * Visualizations and dashboards
@@ -42,18 +43,19 @@ Each project folder contains supporting materials such as:
 
 # 📚 Portfolio Projects
 
-| Project                                                                                                                               | Description                                                                                                                                                                                   | Methods                                                   | Tools                                                  |
-| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------ |
-| 🚀 [SpaceX Falcon 9 Launch Analytics & Prediction]([./Project_7_Complete_Data_Analysis_SpaceX_Python](https://github.com/KemanXiang/Portfolio_Projects/tree/main/01SpaceX_Falcon9_1st_Stage_Success_Landing_Prediction_Python))                                  | End-to-end analytics project investigating factors associated with Falcon 9 launch success through data collection, SQL analysis, visualization, dashboards, and machine learning prediction. | Data Pipeline, EDA, Classification, Predictive Modeling   | Python, SQL, SQLite, Plotly Dash, Folium, scikit-learn |
-| 📊 [Comparative Financial Analytics: Johnson & Johnson vs. Procter & Gamble]([./Project_3_FinancialAnalysis_JNJ_PG_Excel](https://github.com/KemanXiang/Portfolio_Projects/tree/main/06Financial_Analytics_JNJ_vs_PG_Excel))              | Comparative financial analysis examining profitability, liquidity, efficiency, solvency, growth, and strategic expansion using corporate financial data.                                      | Financial Analysis, Ratio Analysis, Business Analytics    | Excel, Financial Modeling, Visualization               |
-| 🤖 [Predicting Daily Rainfall in Melbourne Using Machine Learning]([./Project_6_MachineLearning_Rainfall_Prediction_Classifier_Python](https://github.com/KemanXiang/Portfolio_Projects/tree/main/03Machine_Learning_Predicting_Daily_Rainfall_Melbourne_Python)) | Machine learning study predicting next-day rainfall using temporal validation and model comparison.                                                                                           | Classification, Feature Engineering, Model Evaluation     | Python, pandas, NumPy, scikit-learn                    |
-| 🚗 [Automobile Pricing Analytics]([./Project_4_RegressionAnalysis_Automobile_Pricing_Python](https://github.com/KemanXiang/Portfolio_Projects/tree/main/02Regression_Analysis_Automobile_Pricing_Python))                                           | Regression analysis project examining automobile pricing determinants through exploratory analysis and predictive modeling.                                                                   | Regression Analysis, Cross-validation, Model Evaluation   | Python, pandas, SciPy, scikit-learn                    |
-| 🌎 [Canada Immigration Visual Analytics]([./Project_5_Visualization_Canada_Immigration_Python](https://github.com/KemanXiang/Portfolio_Projects/tree/main/04Visualization_Canada_Immigration_Analytics_Python))                                         | Exploratory and geospatial visualization project analyzing international immigration patterns over time.                                                                                      | Data Visualization, Geographic Analytics, EDA             | Python, Pandas, Matplotlib, GeoPandas, Folium          |
-| 📱 [Bellabeat Smart Device Usage Analysis]([./Project_2_BusinessAnalysis_Bellabeat_R](https://github.com/KemanXiang/Portfolio_Projects/tree/main/07Bellabeat_Smart_Device_Usage_Analysis_R))                                                  | Behavioral analytics project examining activity and sleep patterns using wearable device data.                                                                                                | Statistical Analysis, Correlation Analysis, Visualization | R, R Markdown                                          |
-| 🏷️ [Brand Management & Consumer Perception Thesis]([./Project_8_Undergraduate_Thesis_Brand_Management](https://github.com/KemanXiang/Portfolio_Projects/tree/main/08Undergraduate_Thesis_Brand_Management))                                | Empirical business research examining relationships between brand management dimensions and consumer perception.                                                                              | Survey Analysis, OLS Regression, Research Methods         | Stata, Excel                                           |
-| 🌱 [Global CO₂ Emissions Visualization]([./Project_1_Visualization_CO2_Emission_Tableau](https://github.com/KemanXiang/Portfolio_Projects/tree/main/05Visualization_CO2_Emmission_Tableau))                                               | Tableau visualization portfolio exploring global emissions through geographic, temporal, and integrated datasets.                                                                             | Dashboard Design, Data Integration, Visual Analytics      | Tableau, Excel                                         |
-| 🔄 [Market Share Dynamics & Intervention Simulation — Markov-Chain Analysis](https://github.com/KemanXiang/0_Portfolio_Projects/tree/main/09Markov_Chain_Market_Share_Simulation_Excel) | Markov-chain simulation of Coke–Pepsi customer switching over 52 weeks, comparing baseline market-share dynamics with advertising and periodic coupon interventions and evaluating their market-share and economic effects. | Markov-Chain Modeling, Dynamic Simulation, Intervention Analysis | Excel, Simulation Modeling, Data Visualization |
-| ☀️ [Barstow Commercial Solar PV & Battery Energy Storage Techno-Economic Analysis](https://github.com/KemanXiang/0_Portfolio_Projects/tree/main/10Barstow_Commercial_Solar) | Techno-economic analysis integrating commercial utility/load data, PV generation modeling, battery sizing, scenario comparison, and financial evaluation to support solar-plus-storage investment decisions. | Load Analysis, PV/ESS Sizing, Scenario Analysis, Financial Modeling | Excel, Energy Modeling, Financial Analysis, Data Visualization |
+| Project | Description | Methods | Tools |
+|---|---|---|---|
+| 🚀 [SpaceX Falcon 9 Launch Analytics & Prediction](./01SpaceX_Falcon9_1st_Stage_Success_Landing_Prediction_Python)                                  | End-to-end analytics project investigating factors associated with Falcon 9 launch success through data collection, SQL analysis, visualization, dashboards, and machine learning prediction. | Data Pipeline, EDA, Classification, Predictive Modeling   | Python, SQL, SQLite, Plotly Dash, Folium, scikit-learn |
+| 📊 [Comparative Financial Analytics: Johnson & Johnson vs. Procter & Gamble](./06Financial_Analytics_JNJ_vs_PG_Excel)              | Comparative financial analysis examining profitability, liquidity, efficiency, solvency, growth, and strategic expansion using corporate financial data.                                      | Financial Analysis, Ratio Analysis, Business Analytics    | Excel, Financial Modeling, Visualization               |
+| 🤖 [Predicting Daily Rainfall in Melbourne Using Machine Learning](./03Machine_Learning_Predicting_Daily_Rainfall_Melbourne_Python) | Machine learning study predicting next-day rainfall using temporal validation and model comparison.                                                                                           | Classification, Feature Engineering, Model Evaluation     | Python, pandas, NumPy, scikit-learn                    |
+| 🚗 [Automobile Pricing Analytics](./02Regression_Analysis_Automobile_Pricing_Python)                                           | Regression analysis project examining automobile pricing determinants through exploratory analysis and predictive modeling.                                                                   | Regression Analysis, Cross-validation, Model Evaluation   | Python, pandas, SciPy, scikit-learn                    |
+| 🌎 [Canada Immigration Visual Analytics](./04Visualization_Canada_Immigration_Analytics_Python)                                         | Exploratory and geospatial visualization project analyzing international immigration patterns over time.                                                                                      | Data Visualization, Geographic Analytics, EDA             | Python, Pandas, Matplotlib, GeoPandas, Folium          |
+| 📱 [Bellabeat Smart Device Usage Analysis](./07Bellabeat_Smart_Device_Usage_Analysis_R)                                                  | Behavioral analytics project examining activity and sleep patterns using wearable device data.                                                                                                | Statistical Analysis, Correlation Analysis, Visualization | R, R Markdown                                          |
+| 🏷️ [Brand Management & Consumer Perception Thesis](./08Undergraduate_Thesis_Brand_Management)                                | Empirical business research examining relationships between brand management dimensions and consumer perception.                                                                              | Survey Analysis, OLS Regression, Research Methods         | Stata, Excel                                           |
+| 🌱 [Global CO₂ Emissions Visualization](./05Visualization_CO2_Emmission_Tableau)                                               | Tableau visualization portfolio exploring global emissions through geographic, temporal, and integrated datasets.                                                                             | Dashboard Design, Data Integration, Visual Analytics      | Tableau, Excel                                         |
+| 🔄 [Market Share Dynamics & Intervention Simulation — Markov-Chain Analysis](./09Markov_Chain_Market_Share_Simulation_Excel) | Markov-chain simulation of Coke–Pepsi customer switching over 52 weeks, comparing baseline market-share dynamics with advertising and periodic coupon interventions and evaluating their market-share and economic effects. | Markov-Chain Modeling, Dynamic Simulation, Intervention Analysis | Excel, Simulation Modeling, Data Visualization |
+| ☀️ [Barstow Commercial Solar PV & Battery Energy Storage Techno-Economic Analysis](./10Barstow_Commercial_Solar) | Techno-economic analysis integrating commercial utility/load data, PV generation modeling, battery sizing, scenario comparison, and financial evaluation to support solar-plus-storage investment decisions. | Load Analysis, PV/ESS Sizing, Scenario Analysis, Financial Modeling | Excel, Energy Modeling, Financial Analysis, Data Visualization |
+| 🩺 [Healthcare Infectious Disease Simulation](./11Healthcare_Infectious_Disease_Simulation_Portfolio_Project) | Stochastic infectious-disease simulation comparing protection and no-protection scenarios, tracking population outcomes and cumulative tax revenue over time. | Monte Carlo Simulation, Stochastic Dynamic Modeling, Intervention Analysis, Confidence Intervals, Convergence Analysis | Excel, Simulation Modeling, Statistical Analysis |
 
 ---
 
@@ -104,16 +106,21 @@ Portfolio_Projects/
 │   ├── Stata replication materials
 │   └── Supporting datasets
 │
-├── 09Market_Share_Dynamics_Intervention_Simulation/
+├── 09Markov_Chain_Market_Share_Simulation_Excel/
 │   ├── README.md
 │   ├── Excel simulation model
 │   └── Project documentation
 │
-└── 10Barstow_Commercial_Solar/
+├── 10Barstow_Commercial_Solar/
+│   ├── README.md
+│   ├── Excel techno-economic model
+│   ├── Research-style report
+│   └── Supporting project documentation
+│
+└── 11Healthcare_Infectious_Disease_Simulation_Portfolio_Project/
     ├── README.md
-    ├── Excel techno-economic model
-    ├── Research-style report
-    └── Supporting project documentation
+    ├── Excel simulation model
+    └── PDF project report
 ```
 
 ---
@@ -125,6 +132,7 @@ Across these projects, I explore how quantitative methods can support:
 * Business decision-making
 * Predictive analytics
 * Simulation and intervention analysis
+* Stochastic dynamic systems and uncertainty quantification
 * Operational improvement
 * Techno-economic and financial modeling
 * Strategic analysis
