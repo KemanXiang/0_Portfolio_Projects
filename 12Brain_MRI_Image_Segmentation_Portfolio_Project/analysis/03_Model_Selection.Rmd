@@ -1,0 +1,435 @@
+---
+title: "Brain MRI Image Segmentation Using K-Means Clustering"
+subtitle: "03 — Model Selection and Clustering Stability"
+author: "Keman Xiang | PhD Application Portfolio"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+    fig_caption: true
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.align = "center", fig.width = 9, fig.height = 5,
+                      dpi = 125, out.width = "95%")
+options(scipen = 999)
+```
+
+# Project Overview
+
+**Project:** Brain MRI Image Segmentation Using K-Means Clustering  
+**Module:** 03 — Model Selection and Clustering Stability  
+**Environment:** R / RStudio / R Markdown  
+**Training image:** `healthy.csv`  
+**Companion image:** `tumor.csv` (validated but not used to choose *k*)
+
+## Background and motivation
+
+We investigate how the number of K-Means clusters influences grayscale brain MRI segmentation. Each pixel is represented by one numeric intensity between zero and one. We group pixels by intensity, rather than by their physical location or verified anatomical identity. A small number of clusters compresses the intensity scale into broad regions; a larger number preserves finer intensity distinctions but increases segmentation complexity.
+
+We compare candidate cluster counts using within-cluster sum of squares (WCSS), relative improvements in fit, segmented-image comparisons, and repeated random initializations. We use the five-cluster segmentation as a reference point while assessing whether nearby alternatives are reasonable. We do **not** infer clinical tumor boundaries or diagnostic accuracy from these unsupervised labels.
+
+## Research questions
+
+1. How does total within-cluster variation change as we increase the number of clusters from two to ten?
+2. At which values of *k* do additional clusters produce diminishing reductions in WCSS?
+3. How do the segmentation patterns and intensity centroids differ across candidate models?
+4. How sensitive are the fitted solutions to K-Means initialization, and what does that imply for our model choice?
+
+## Analysis roadmap
+
+**Source-data validation** → **K-Means objective** → **WCSS sweep (k = 2–10)** → **Marginal improvements and elbow inspection** → **Segmentation comparison** → **Initialization stability** → **Selection and limitations**.
+
+We treat model selection as a balance between intensity fidelity, parsimony, and stability. We do not treat the elbow as a statistically proven optimum.
+
+## Data provenance and scope
+
+| Source | Role in our analysis |
+|:--|:--|
+| `healthy.csv` | Fit and compare all K-Means models using these observed grayscale pixels. |
+| `tumor.csv` | Verify the companion image's format without fitting, validating, or selecting *k* on it. |
+| `Unit6_Recitation.pdf` | The image-segmentation and clustering background. |
+| `Unit6_Recitation.R` | Matrix-to-vector representation and five-cluster K-Means segmentation workflow. |
+| `week6_3.2.R` | WCSS / scree-plot strategy across *k* = 2–10 and examine the four- and five-cluster alternatives. |
+
+**Unit of analysis.** We observe pixels, not independent patients. We have no tissue annotations, segmentation masks, acquisition metadata, or clinical outcomes. We therefore evaluate numerical clustering properties, not medical segmentation accuracy.
+
+# 1. Data Import and Integrity Checks
+
+## 1.1 Locate and read the original CSV files
+
+Read the data.
+
+```{r locate-files}
+find_data_dir <- function() {
+  candidates <- c("data", "../data", ".", "..")
+  found <- vapply(candidates, function(path) {
+    file.exists(file.path(path, "healthy.csv")) &&
+      file.exists(file.path(path, "tumor.csv"))
+  }, logical(1))
+  if (!any(found)) {
+    stop("Cannot find healthy.csv and tumor.csv. Place both in data/.")
+  }
+  normalizePath(candidates[which(found)[1]], mustWork = TRUE)
+}
+
+data_dir <- find_data_dir()
+healthy_df <- read.csv(file.path(data_dir, "healthy.csv"),
+                       header = FALSE, check.names = FALSE)
+tumor_df <- read.csv(file.path(data_dir, "tumor.csv"),
+                     header = FALSE, check.names = FALSE)
+healthy_matrix <- as.matrix(healthy_df)
+tumor_matrix <- as.matrix(tumor_df)
+```
+
+**Code explanation.** We use `header = FALSE` because each CSV cell is an image intensity, not a column heading. We convert the imported data frames into numeric matrices to preserve the original two-dimensional image shapes.
+
+## 1.2 Validate the matrices and pixel vectors
+
+We verify that both images contain finite numeric intensities within the expected grayscale interval. We then flatten the matrices using R's column-major ordering. We compare the reconstructed pixel values without requiring the CSV-derived matrix names to match.
+
+```{r validate-data}
+validate_image <- function(x, image_name) {
+  stopifnot(is.matrix(x), is.numeric(x), length(dim(x)) == 2L,
+            nrow(x) > 0L, ncol(x) > 0L)
+  if (anyNA(x) || any(!is.finite(x))) {
+    stop(image_name, " contains missing or non-finite pixel values.")
+  }
+  if (any(x < 0 | x > 1)) {
+    stop(image_name, " has intensities outside [0, 1].")
+  }
+  invisible(TRUE)
+}
+validate_image(healthy_matrix, "Healthy MRI")
+validate_image(tumor_matrix, "Tumor MRI")
+
+healthy_vector <- as.vector(healthy_matrix)
+tumor_vector <- as.vector(tumor_matrix)
+
+healthy_check <- matrix(healthy_vector, nrow = nrow(healthy_matrix),
+                        ncol = ncol(healthy_matrix))
+tumor_check <- matrix(tumor_vector, nrow = nrow(tumor_matrix),
+                      ncol = ncol(tumor_matrix))
+stopifnot(
+  length(healthy_vector) == prod(dim(healthy_matrix)),
+  length(tumor_vector) == prod(dim(tumor_matrix)),
+  identical(as.vector(healthy_check), healthy_vector),
+  identical(as.vector(tumor_check), tumor_vector),
+  isTRUE(all.equal(unname(healthy_check), unname(healthy_matrix))),
+  isTRUE(all.equal(unname(tumor_check), unname(tumor_matrix)))
+)
+
+input_summary <- data.frame(
+  Image = c("Healthy MRI", "Tumor MRI"),
+  Rows = c(nrow(healthy_matrix), nrow(tumor_matrix)),
+  Columns = c(ncol(healthy_matrix), ncol(tumor_matrix)),
+  Pixels = c(length(healthy_vector), length(tumor_vector)),
+  Minimum = c(min(healthy_vector), min(tumor_vector)),
+  Maximum = c(max(healthy_vector), max(tumor_vector)),
+  Missing = c(sum(is.na(healthy_vector)), sum(is.na(tumor_vector)))
+)
+knitr::kable(input_summary, digits = 4,
+             caption = "Verified dimensions and intensity ranges of the source images")
+```
+
+**Output interpretation.** We observe `r format(length(healthy_vector), big.mark = ",")` pixels in the healthy image (`r nrow(healthy_matrix)` × `r ncol(healthy_matrix)`) and `r format(length(tumor_vector), big.mark = ",")` pixels in the companion image (`r nrow(tumor_matrix)` × `r ncol(tumor_matrix)`). Both are numeric matrices with `r sum(is.na(healthy_vector)) + sum(is.na(tumor_vector))` missing values in total. We fit all candidate models exclusively to the healthy pixels; we reserve the tumor image for subsequent cross-image analysis.
+
+# 2. K-Means Model-Selection Framework
+
+## 2.1 What we optimize
+
+We fit one-dimensional K-Means to grayscale intensities. For a chosen number of clusters *k*, we minimize the total within-cluster sum of squares:
+
+$$
+\operatorname{WCSS}(k) = \sum_{j=1}^{k} \sum_{i \in C_j} (x_i - \mu_j)^2,
+$$
+
+where $x_i$ is the observed intensity of pixel $i$, $C_j$ is cluster $j$, and $\mu_j$ is its centroid. We calculate WCSS using `sum(model$withinss)` and verify it against the model's `tot.withinss`.
+
+We expect WCSS to decrease (or stay unchanged at the global optimum) as *k* increases because more centroids can represent more intensity levels. We therefore **cannot select k by minimizing WCSS alone**: doing so would systematically favor more clusters. Instead, we inspect the improvement relative to model complexity.
+
+## 2.2 Estimation Strategy
+
+We evaluate *k* = 2, 3, ..., 10 using the full observed healthy MRI intensity vector. We set a seed and use multiple random starts (`nstart = 5`) to reduce dependence on a single initialization. We keep `iter.max = 1000`. This expands the baseline K-Means specification while retaining the same pixel-level objective and input data.
+
+**Computational note.** We have `r format(length(healthy_vector), big.mark = ",")` pixel observations, so fitting multiple models may take time on a laptop. We intentionally do not subsample the image: the reported WCSS values refer to the entire healthy MRI.
+
+```{r fit-k-grid}
+k_values <- 2:10
+set.seed(1)
+
+models <- lapply(k_values, function(k) {
+  kmeans(healthy_vector, centers = k, iter.max = 1000,
+         nstart = 5, algorithm = "Hartigan-Wong")
+})
+names(models) <- as.character(k_values)
+
+stopifnot(all(vapply(models, function(m) {
+  isTRUE(all.equal(sum(m$withinss), m$tot.withinss,
+                   tolerance = 1e-8)) &&
+    sum(m$size) == length(healthy_vector) &&
+    all(is.finite(m$centers)) &&
+    all(m$size > 0)
+}, logical(1))))
+
+wcss <- vapply(models, function(m) m$tot.withinss, numeric(1))
+model_summary <- data.frame(
+  k = k_values,
+  WCSS = as.numeric(wcss),
+  Between_SS = vapply(models, function(m) m$betweenss, numeric(1)),
+  Explained_Variance = vapply(models, function(m) {
+    100 * m$betweenss / m$totss
+  }, numeric(1)),
+  Iterations = vapply(models, function(m) m$iter, integer(1)),
+  Convergence_Code = vapply(models, function(m) m$ifault, integer(1))
+)
+knitr::kable(model_summary, digits = 4,
+             caption = "Full-image K-Means comparison for k = 2–10")
+```
+
+**Code explanation.** We fit nine separate K-Means models and retain their full result objects. `tot.withinss` is the total squared distance from each pixel to its assigned centroid. `betweenss / totss` describes the proportion of intensity variation represented by between-cluster differences; it is an in-sample quantization measure, **not** diagnostic predictive accuracy. `Convergence_Code` is the algorithm's reported status, which we inspect before interpreting solutions.
+
+**Output interpretation.** We obtain a WCSS of `r format(round(model_summary$WCSS[model_summary$k == 2], 4), big.mark = ",")` at *k* = 2 and `r format(round(model_summary$WCSS[model_summary$k == 10], 4), big.mark = ",")` at *k* = 10. The five-cluster model has WCSS `r format(round(model_summary$WCSS[model_summary$k == 5], 4), big.mark = ",")` and accounts for `r round(model_summary$Explained_Variance[model_summary$k == 5], 2)`% of total pixel-intensity variation. These results measure intensity reconstruction, not whether the cluster boundaries coincide with brain anatomy.
+
+# 3. Elbow Method and Marginal Improvements
+
+## 3.1 Visualize the WCSS curve
+
+We plot total WCSS against the number of clusters. We look for a region where the curve begins to flatten: beyond that point, additional clusters provide smaller improvements in within-cluster compactness.
+
+```{r elbow-plot, fig.cap="WCSS elbow plot for full-resolution healthy MRI pixels (k = 2–10)."}
+plot(model_summary$k, model_summary$WCSS,
+     type = "b", pch = 19, lwd = 2,
+     xlab = "Number of clusters (k)",
+     ylab = "Total within-cluster sum of squares (WCSS)",
+     main = "K-Means Model Selection: Elbow Plot", xaxt = "n")
+axis(1, at = k_values)
+abline(v = 5, lty = 2, col = "gray50")
+legend("topright", legend = "Reference: k = 5",
+       lty = 2, col = "gray50", bty = "n")
+```
+
+**Code explanation.** We draw the fitted WCSS values without rescaling or smoothing them. We mark *k* = 5 as a reference, not as an automatically established optimum. We evaluate the visual bend together with the quantitative reductions below.
+
+**Output interpretation.** We expect WCSS to fall as more centroids become available. A flattening curve suggests diminishing returns, but the location of an elbow can be ambiguous, especially when the underlying grayscale distribution is continuous or contains multiple closely spaced intensity modes. We therefore inspect the size of each additional reduction rather than relying solely on the plot's shape.
+
+## 3.2 Quantify gains from each additional cluster
+
+We calculate the absolute decrease in WCSS and the percentage decrease relative to the previous model. The first candidate (*k* = 2) has no preceding model in this grid, so its marginal gain is undefined.
+
+```{r marginal-gains}
+model_summary$WCSS_Reduction <- c(NA_real_, -diff(model_summary$WCSS))
+model_summary$Reduction_Percent <- c(
+  NA_real_,
+  100 * (-diff(model_summary$WCSS)) /
+    head(model_summary$WCSS, -1)
+)
+knitr::kable(model_summary[, c("k", "WCSS", "WCSS_Reduction",
+                              "Reduction_Percent")],
+             digits = 3,
+             caption = "Absolute and percentage reductions in WCSS")
+```
+
+**Output interpretation.** We reduce WCSS by `r round(model_summary$Reduction_Percent[model_summary$k == 4], 2)`% when moving from three to four clusters, by `r round(model_summary$Reduction_Percent[model_summary$k == 5], 2)`% when moving from four to five, and by `r round(model_summary$Reduction_Percent[model_summary$k == 6], 2)`% when moving from five to six. We use these **observed marginal gains** to discuss whether a sixth cluster adds enough intensity detail to justify its complexity. A small percentage reduction is not automatically negligible; its relevance depends on the analytical goal.
+
+```{r marginal-plot, fig.cap="Percentage reduction in WCSS from adding one cluster."}
+plot(model_summary$k[-1], model_summary$Reduction_Percent[-1],
+     type = "b", pch = 19, lwd = 2,
+     xlab = "Number of clusters in larger model (k)",
+     ylab = "WCSS reduction from k - 1 to k (%)",
+     main = "Marginal Improvement from Additional Clusters", xaxt = "n")
+axis(1, at = k_values[-1])
+abline(v = 5, lty = 2, col = "gray50")
+```
+
+**Code explanation and interpretation.** We plot proportional rather than absolute reductions to make successive gains easier to compare. We avoid treating the largest marginal reduction as an automatic selection rule; this plot is a diagnostic for diminishing returns, not a formal statistical test.
+
+# 4. Compare Segmented Images and Cluster Centroids
+
+## 4.1 Preserve image orientation
+
+We display the CSV pixel matrix in row-down, column-right image orientation. R's base `image()` uses a different axis convention from conventional image display, so we transpose the matrix and reverse its rows **only for plotting**. We leave all model inputs unchanged.
+
+```{r image-functions}
+plot_mri <- function(pixel_matrix, palette, main, zlim = NULL) {
+  display_matrix <- t(pixel_matrix[nrow(pixel_matrix):1, , drop = FALSE])
+  if (is.null(zlim)) zlim <- range(display_matrix)
+  image(display_matrix, axes = FALSE, asp = 1, useRaster = TRUE,
+        col = palette, zlim = zlim, main = main,
+        xlab = "", ylab = "")
+}
+
+# We use a fixed set of colors indexed by intensity rank, not arbitrary
+# K-Means cluster ID, so visual comparisons are consistent across k.
+segmented_intensity <- function(model, image_matrix) {
+  assigned_intensity <- as.numeric(model$centers[model$cluster, 1])
+  matrix(assigned_intensity, nrow = nrow(image_matrix),
+         ncol = ncol(image_matrix))
+}
+```
+
+**Code explanation.** We reconstruct an image by replacing each pixel with its assigned cluster centroid. We use a fixed grayscale palette so that darker and lighter clusters remain comparable across different values of *k*. Raw cluster IDs are arbitrary and cannot be compared numerically between models.
+
+## 4.2 Compare k = 3, 4, 5, 6, and 8
+
+We select several representative candidate counts to illustrate the trade-off between coarse segmentation and finer intensity resolution. The grayscale plots represent **centroid intensities**, not ground-truth tissue classes.
+
+```{r segmentation-grid, fig.width=10, fig.height=7, fig.cap="Original healthy MRI and centroid-reconstructed segmentations at selected k values."}
+selected_k <- c(3L, 4L, 5L, 6L, 8L)
+old_par <- par(mfrow = c(2, 3), mar = c(2.5, 2.5, 3, 1))
+plot_mri(healthy_matrix, gray.colors(256, start = 0, end = 1),
+         "Original MRI", zlim = c(0, 1))
+for (k in selected_k) {
+  reconstructed <- segmented_intensity(models[[as.character(k)]],
+                                       healthy_matrix)
+  plot_mri(reconstructed, gray.colors(256, start = 0, end = 1),
+           paste("K-Means: k =", k), zlim = c(0, 1))
+}
+par(old_par)
+```
+
+**Output interpretation.** We compare how much grayscale detail remains as we increase *k*. At lower *k*, we merge more pixel intensities into a few broad bands. At higher *k*, we represent more intensity distinctions and may reveal finer-looking boundaries. However, a visually detailed segmentation does not establish more accurate anatomy: intensity-only clustering ignores pixel adjacency, image artifacts, and tissue-specific ground truth.
+
+## 4.3 Inspect centroid positions and pixel proportions
+
+We order cluster centroids by intensity because K-Means cluster numbers have no inherent meaning. We then calculate the fraction of pixels assigned to each ordered centroid.
+
+```{r centroids-table}
+centroid_profile <- function(model, k) {
+  ordering <- order(as.numeric(model$centers[, 1]))
+  data.frame(
+    k = k,
+    Intensity_Rank = seq_len(k),
+    Centroid = as.numeric(model$centers[ordering, 1]),
+    Pixels = as.integer(model$size[ordering]),
+    Percent = 100 * as.numeric(model$size[ordering]) /
+      sum(model$size)
+  )
+}
+profiles <- do.call(rbind, lapply(c(4L, 5L, 6L), function(k) {
+  centroid_profile(models[[as.character(k)]], k)
+}))
+rownames(profiles) <- NULL
+knitr::kable(profiles, digits = 4,
+             caption = "Intensity-ranked centroids and cluster proportions for k = 4, 5, and 6")
+```
+
+**Code explanation.** We use `order()` to sort centroids from darkest to lightest. We reorder the corresponding cluster sizes in the same way. This allows us to compare intensity bands across models without confusing arbitrary numeric cluster labels with stable tissue identities.
+
+**Output interpretation.** We interpret each centroid as a representative grayscale level, and each proportion as the share of all image pixels assigned to that level. These proportions include any background pixels present in the CSV. We do not label the clusters as specific tissues because the data provide no anatomical annotations.
+
+# 5. Sensitivity to Random Initialization
+
+## 5.1 Why initialization matters
+
+Here we use K-Means, an iterative algorithm that can converge to different local solutions depending on the initial centroids. To examine this sensitivity, we fit multiple single-start models at *k* = 4 and *k* = 5. We compare their WCSS values and intensity-ranked centroids. We use a fixed sequence of seeds to make the exercise reproducible.
+
+We deliberately keep this experiment separate from the multi-start models in Section 2: the single-start runs reveal how much initialization matters, while `nstart = 5` provides a stronger practical candidate fit.
+
+```{r initialization-stability}
+seeds <- 1:10
+stability_models <- list()
+stability_rows <- list()
+for (k in c(4L, 5L)) {
+  for (seed in seeds) {
+    set.seed(seed)
+    fit <- kmeans(healthy_vector, centers = k, iter.max = 1000,
+                  nstart = 1, algorithm = "Hartigan-Wong")
+    key <- paste(k, seed, sep = "_")
+    stability_models[[key]] <- fit
+    stability_rows[[key]] <- data.frame(
+      k = k, Seed = seed, WCSS = fit$tot.withinss,
+      Convergence_Code = fit$ifault
+    )
+  }
+}
+stability_results <- do.call(rbind, stability_rows)
+rownames(stability_results) <- NULL
+stability_summary <- do.call(rbind, lapply(split(stability_results,
+                                                  stability_results$k),
+                                            function(d) {
+  data.frame(k = d$k[1], Runs = nrow(d),
+             Minimum_WCSS = min(d$WCSS),
+             Median_WCSS = median(d$WCSS),
+             Maximum_WCSS = max(d$WCSS),
+             Range_WCSS = diff(range(d$WCSS)),
+             Relative_Range_Percent = 100 * diff(range(d$WCSS)) /
+               min(d$WCSS))
+}))
+rownames(stability_summary) <- NULL
+knitr::kable(stability_summary, digits = 5,
+             caption = "Initialization sensitivity over ten single-start runs")
+```
+
+**Code explanation.** We refit each candidate with seeds 1–10, one initialization per seed. We summarize the minimum, median, maximum, and spread of WCSS. The relative range scales the spread by the best observed single-start WCSS. This is a practical sensitivity check, not a formal confidence interval or statistical significance test.
+
+**Output interpretation.** We observe a relative WCSS range of `r round(stability_summary$Relative_Range_Percent[stability_summary$k == 4], 4)`% for *k* = 4 and `r round(stability_summary$Relative_Range_Percent[stability_summary$k == 5], 4)`% for *k* = 5 across the tested seeds. A smaller spread indicates more consistent objective values under these initializations; it does not prove that all runs recover the global optimum. We also inspect the convergence codes reported by R.
+
+```{r stability-plot, fig.cap="Single-start WCSS values for k = 4 and k = 5 across ten fixed seeds."}
+plot(seeds, stability_results$WCSS[stability_results$k == 4],
+     type = "b", pch = 19, lwd = 2,
+     xlab = "Random seed", ylab = "WCSS",
+     main = "Sensitivity to K-Means Initialization",
+     ylim = range(stability_results$WCSS), xaxt = "n")
+axis(1, at = seeds)
+lines(seeds, stability_results$WCSS[stability_results$k == 5],
+      type = "b", pch = 17, lty = 2)
+legend("topright", legend = c("k = 4", "k = 5"),
+       pch = c(19, 17), lty = c(1, 2), bty = "n")
+```
+
+**Output interpretation.** We use this plot to compare within-*k* variation across random starts, not to compare the absolute WCSS levels as if they were normalized for model complexity. The lower WCSS of a higher-*k* model is expected and is not by itself evidence of a better scientific segmentation.
+
+# 6. Model Selection and Interpretation
+
+## 6.1 Synthesize fit, complexity, and stability
+
+We combine the WCSS curve, the marginal improvement table, the reconstructed MRI images, and the random-start sensitivity results. We do not select *k* by a single numerical threshold, because no ground-truth segmentation is available to define an objectively correct number of tissue regions.
+
+We retain **k = 5 as the reference specification** for the subsequent cross-image analysis. We also retain **k = 4 as a comparison model**, since it offers a more parsimonious intensity partition. We treat this as an interpretable analytical choice, rather than a proof that either model corresponds to a medically correct number of tissue classes.
+
+```{r selection-summary}
+selected_summary <- model_summary[model_summary$k %in% c(4L, 5L, 6L),
+                                  c("k", "WCSS", "Explained_Variance",
+                                    "Reduction_Percent", "Convergence_Code")]
+knitr::kable(selected_summary, digits = 4,
+             caption = "Decision-relevant model diagnostics near k = 5")
+```
+
+**Output interpretation.** We use the three neighboring models to inspect the additional WCSS reduction obtained by increasing *k*. We compare the changes with the segmentation images and the stability results before choosing how much grayscale detail to preserve. Because this is an unsupervised, one-feature problem, we do not interpret explained variance as a classification accuracy metric.
+
+## 6.2 Important limitations
+
+- **We use intensity only.** We do not model neighboring pixels, edges, spatial smoothness, or image texture. Disconnected pixels can share the same cluster.
+- **We lack annotated segmentation masks.** We cannot calculate Dice, intersection-over-union, sensitivity, or specificity for anatomical or tumor regions.
+- **We analyze one training image.** We cannot infer patient-level generalizability or clinical robustness from a single healthy MRI.
+- **We include the image background.** We fit the full CSV without a validated brain mask; background intensities can influence centroid placement and cluster proportions.
+- **We inspect in-sample fit.** We do not interpret the elbow or WCSS improvements as out-of-sample prediction quality.
+- **We cannot diagnose tumors.** We use the tumor image only as a later test of transferring intensity clusters; its clinical content is not labeled in the source files.
+
+# 7. Conclusion
+
+We evaluate K-Means segmentation of `r format(length(healthy_vector), big.mark = ",")` observed healthy-MRI pixels across nine candidate cluster counts, from two to ten. We quantify the WCSS–complexity trade-off, compare segmented images and ordered centroids, and assess sensitivity to random initialization. We retain five clusters as an interpretable reference while keeping four clusters as a parsimonious alternative.
+
+Our results establish how different values of *k* represent grayscale intensity variation in this image. They do **not** establish clinically meaningful tissue boundaries or tumor-detection performance. We next apply the learned healthy-image intensity centroids to the separate MRI in `tumor.csv`, without treating cross-image cluster assignment as supervised diagnosis.
+
+# 8. Reproducibility
+
+Download and read the two original CSVs and follow the code to reproduce the results. 
+
+```{r session-info}
+sessionInfo()
+```
+
+# References
+
+- MIT OpenCourseWare. *15.071 The Analytics Edge*, Unit 6 Recitation: *Seeing the Big Picture: Segmenting Images to Create Data* (`Unit6_Recitation.pdf`).
+- Course analysis code: `Unit6_Recitation.R`.
+- K-Means model-selection and cross-image analysis code: `week6_3.2.R`.
+- Project data: `healthy.csv` and `tumor.csv` (grayscale MRI pixel matrices supplied with the course materials).

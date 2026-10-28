@@ -20,12 +20,13 @@ Welcome to my analytics portfolio.
 
 This repository contains research-oriented data analytics projects developed at the intersection of **business analytics, data science, and quantitative research**.
 
-Across 11 selected projects, the portfolio demonstrates analytical workflows and modeling approaches, including:
+Across 12 selected projects, the portfolio demonstrates analytical workflows and modeling approaches, including:
 
 * Data collection and preparation
 * Exploratory data analysis (EDA)
 * Statistical modeling
 * Monte Carlo simulation and stochastic dynamic modeling
+* Unsupervised learning and image segmentation
 * Machine learning
 * Data visualization
 * Business interpretation
@@ -56,6 +57,7 @@ Each project folder contains supporting materials such as:
 | 🔄 [Market Share Dynamics & Intervention Simulation — Markov-Chain Analysis](./09Markov_Chain_Market_Share_Simulation_Excel) | Markov-chain simulation of Coke–Pepsi customer switching over 52 weeks, comparing baseline market-share dynamics with advertising and periodic coupon interventions and evaluating their market-share and economic effects. | Markov-Chain Modeling, Dynamic Simulation, Intervention Analysis | Excel, Simulation Modeling, Data Visualization |
 | ☀️ [Barstow Commercial Solar PV & Battery Energy Storage Techno-Economic Analysis](./10Barstow_Commercial_Solar) | Techno-economic analysis integrating commercial utility/load data, PV generation modeling, battery sizing, scenario comparison, and financial evaluation to support solar-plus-storage investment decisions. | Load Analysis, PV/ESS Sizing, Scenario Analysis, Financial Modeling | Excel, Energy Modeling, Financial Analysis, Data Visualization |
 | 🩺 [Healthcare Infectious Disease Simulation](./11Healthcare_Infectious_Disease_Simulation_Portfolio_Project) | Stochastic infectious-disease simulation comparing protection and no-protection scenarios, tracking population outcomes and cumulative tax revenue over time. | Monte Carlo Simulation, Stochastic Dynamic Modeling, Intervention Analysis, Confidence Intervals, Convergence Analysis | Excel, Simulation Modeling, Statistical Analysis |
+| 🧠 [Brain MRI Image Segmentation — K-Means Clustering](./12Brain_MRI_Image_Segmentation_Portfolio_Project) | Unsupervised grayscale-intensity segmentation of healthy and tumor-labeled brain MRI images; evaluates cluster selection and transfers healthy-image centroids to a second image to compare intensity patterns and reconstruction error, without claiming clinical tumor detection. | K-Means Clustering, Image Segmentation, Model Selection, Cross-Image Analysis, Reconstruction Error | R, R Markdown, CSV, HTML |
 
 ---
 
@@ -121,6 +123,13 @@ Portfolio_Projects/
     ├── README.md
     ├── Excel simulation model
     └── PDF project report
+│
+└── 12Brain_MRI_Image_Segmentation_Portfolio_Project/
+    ├── README.md
+    ├── CSV image data
+    ├── R Markdown analysis (.Rmd)
+    ├── HTML and PDF analysis outputs
+    └── PDF research report
 ```
 
 ---
@@ -133,6 +142,7 @@ Across these projects, I explore how quantitative methods can support:
 * Predictive analytics
 * Simulation and intervention analysis
 * Stochastic dynamic systems and uncertainty quantification
+* Unsupervised learning, image segmentation, and model transfer analysis
 * Operational improvement
 * Techno-economic and financial modeling
 * Strategic analysis
