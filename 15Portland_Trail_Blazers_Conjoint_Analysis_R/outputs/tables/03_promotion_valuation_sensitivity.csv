@@ -1,0 +1,29 @@
+"to_level","valuation_method","wtp_usd","incremental_cost_usd","value_less_reported_cost","identifiable"
+"Priority for home playoff tickets","Local slope $15–$25",10.1517130743669,0,10.1517130743669,TRUE
+"Priority for home playoff tickets","Local slope $25–$35",47.0693868876846,0,47.0693868876846,TRUE
+"Priority for home playoff tickets","Local slope $35–$60",9.81263900334051,0,9.81263900334051,TRUE
+"Hot dog and soda with each ticket","Local slope $15–$25",11.278560788358,3.25,8.02856078835797,TRUE
+"Hot dog and soda with each ticket","Local slope $25–$35",52.2941238975667,3.25,49.0441238975667,TRUE
+"Hot dog and soda with each ticket","Local slope $35–$60",10.9018492428471,3.25,7.65184924284714,TRUE
+"Trail Blazer apparel (hat, jersey, etc.)","Local slope $15–$25",7.32072877277415,12,-4.67927122722585,TRUE
+"Trail Blazer apparel (hat, jersey, etc.)","Local slope $25–$35",33.9432578897035,12,21.9432578897035,TRUE
+"Trail Blazer apparel (hat, jersey, etc.)","Local slope $35–$60",7.0762114888753,12,-4.9237885111247,TRUE
+"$20 gift certificate for popular local restaurant","Local slope $15–$25",7.67159390397617,10,-2.32840609602383,TRUE
+"$20 gift certificate for popular local restaurant","Local slope $25–$35",35.5700775688025,10,25.5700775688025,TRUE
+"$20 gift certificate for popular local restaurant","Local slope $35–$60",7.41535748779429,10,-2.58464251220571,TRUE
+"Priority for home playoff tickets","Full-range endpoint slope",12.0152438473084,0,12.0152438473084,TRUE
+"Hot dog and soda with each ticket","Full-range endpoint slope",13.3489448653731,3.25,10.0989448653731,TRUE
+"Trail Blazer apparel (hat, jersey, etc.)","Full-range endpoint slope",8.66458111064899,12,-3.33541888935101,TRUE
+"$20 gift certificate for popular local restaurant","Full-range endpoint slope",9.07985389052639,10,-0.92014610947361,TRUE
+"Priority for home playoff tickets","Piecewise from $15",10.7034321538625,0,10.7034321538625,TRUE
+"Priority for home playoff tickets","Piecewise from $25",17.7279211745838,0,17.7279211745838,TRUE
+"Priority for home playoff tickets","Piecewise from $35",9.81263900334051,0,9.81263900334051,TRUE
+"Hot dog and soda with each ticket","Piecewise from $15",15.9281691637445,3.25,12.6781691637445,TRUE
+"Hot dog and soda with each ticket","Piecewise from $25",18.8171314140904,3.25,15.5671314140904,TRUE
+"Hot dog and soda with each ticket","Piecewise from $35",10.9018492428471,3.25,7.65184924284713,TRUE
+"Trail Blazer apparel (hat, jersey, etc.)","Piecewise from $15",7.32072877277415,12,-4.67927122722585,TRUE
+"Trail Blazer apparel (hat, jersey, etc.)","Piecewise from $25",14.9914936601186,12,2.99149366011856,TRUE
+"Trail Blazer apparel (hat, jersey, etc.)","Piecewise from $35",7.0762114888753,12,-4.9237885111247,TRUE
+"$20 gift certificate for popular local restaurant","Piecewise from $15",7.67159390397617,10,-2.32840609602383,TRUE
+"$20 gift certificate for popular local restaurant","Piecewise from $25",15.3306396590375,10,5.33063965903754,TRUE
+"$20 gift certificate for popular local restaurant","Piecewise from $35",7.41535748779428,10,-2.58464251220572,TRUE

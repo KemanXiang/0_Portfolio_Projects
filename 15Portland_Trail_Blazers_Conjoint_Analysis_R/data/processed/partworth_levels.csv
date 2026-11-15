@@ -1,0 +1,17 @@
+"attribute","level_id","level_label","utility","source_utility_row","product_level","cost_usd","source_product_row","level_numeric"
+"Number of Games",1,"3-game create-your-own pack, including one elite team and two very good teams",0.03257,3,"3",,2,3
+"Number of Games",2,"6-game create-your-own pack, including two elite teams and four very good teams",0.24383,4,"6",,3,6
+"Number of Games",3,"10-game create-your-own pack, including any combination of teams.",-0.2764,5,"10",,4,10
+"Ticket Price",1,"$15 per seat per game",0.65646,7,"15",,5,15
+"Ticket Price",2,"$25 per seat per game",0.22011,8,"25",,6,25
+"Ticket Price",3,"$35 per seat per game",0.126,9,"35",,7,35
+"Ticket Price",4,"$60 per seat per game",-1.00257,10,"60",,8,60
+"Ticket Location",1,"300 level, behind the baskets",-0.73169,12,"300 level, behind the baskets",10,9,
+"Ticket Location",2,"300 level, on the corners",-0.43716,13,"300 level, on the corners",12,10,
+"Ticket Location",3,"300 level, midcourt",0.15736,14,"300 level, midcourt",18,11,
+"Ticket Location",4,"200 level, midcourt",1.01148,15,"200 level, midcourt",40,12,
+"Promotional Item",1,"Priority for home playoff tickets",0.12511,17,"Priority for home playoff tickets",0,13,
+"Promotional Item",2,"Hot dog and soda with each ticket",0.17428,18,"Hot dog and soda with each ticket",3.25,14,
+"Promotional Item",3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,19,"Trail Blazer apparel (hat, jersey, etc.)",12,15,
+"Promotional Item",4,"$20 gift certificate for popular local restaurant",0.01689,20,"$20 gift certificate for popular local restaurant",10,16,
+"Promotional Item",5,"No promotional item",-0.31786,21,"No promotional item",0,17,

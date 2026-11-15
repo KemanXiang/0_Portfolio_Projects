@@ -1,0 +1,10 @@
+"check","passed"
+"Exactly 16 unique attribute levels",TRUE
+"Exactly 180 unique feasible package profiles",TRUE
+"Independent feasibility enumeration agrees",TRUE
+"All independent arithmetic differences below tolerance",TRUE
+"Utility design matrix reproduces package scores",TRUE
+"Utility stress experiments have complete iteration counts",TRUE
+"Economic scenario grid covers all packages",TRUE
+"Each economic scenario has a Pareto frontier",TRUE
+"All summary stability statistics are finite",TRUE

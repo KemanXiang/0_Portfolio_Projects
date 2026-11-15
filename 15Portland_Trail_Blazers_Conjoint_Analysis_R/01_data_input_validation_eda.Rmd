@@ -1,0 +1,380 @@
+---
+title: "Portland Trail Blazers: Conjoint Analysis for Ticket Package Design, Pricing, and Economic Decision-Making"
+subtitle: "Module 1 | Data Input, Validation & Exploratory Analysis"
+author: "Keman Xiang"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: readable
+    highlight: tango
+    df_print: paged
+params:
+  workbook: "data/original/Portland Trail Blazers_Keman_Xiang.xlsx"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.width = 9, fig.height = 5.5, dpi = 130)
+required <- c("readxl", "dplyr", "tidyr", "ggplot2", "knitr", "scales")
+missing <- required[!vapply(required, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing)) stop("Install these packages before knitting: ", paste(missing, collapse = ", "))
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# Works from either the project root or the R/ folder in RStudio.
+resolve_input <- function(x) {
+  candidates <- unique(c(x, file.path("..", x),
+    file.path("data", basename(x)),
+    file.path("..", "data",  basename(x))))
+  found <- candidates[file.exists(candidates)]
+  if (!length(found)) stop("Workbook not found. Place '", basename(x),
+                           "' in data/ and knit from the project root or R/ folder.")
+  normalizePath(found[[1]], mustWork = TRUE)
+}
+input_path <- resolve_input(params$workbook)
+project_root <- normalizePath(file.path(dirname(input_path), "..", ".."), mustWork = TRUE)
+output_dir <- file.path(project_root, "outputs")
+for (d in c("tables", "figures")) dir.create(file.path(output_dir, d), recursive = TRUE, showWarnings = FALSE)
+dir.create(file.path(project_root, "data", "processed"), recursive = TRUE, showWarnings = FALSE)
+
+clean_text <- function(x) {
+  x <- as.character(x)
+  x <- gsub("[\u2013\u2014\u2212]", "-", x)
+  x <- gsub("\u00a0", " ", x, fixed = TRUE)
+  trimws(x)
+}
+num <- function(x) {
+  z <- gsub("[$,]", "", clean_text(x))
+  suppressWarnings(as.numeric(z))
+}
+check <- function(ok, msg) if (!isTRUE(ok)) stop(msg, call. = FALSE)
+save_table <- function(x, name) utils::write.csv(x, file.path(output_dir, "tables", name), row.names = FALSE, na = "")
+save_plot <- function(p, name, w = 9, h = 5.5) {
+  ggplot2::ggsave(file.path(output_dir, "figures", name), p, width = w, height = h, dpi = 180)
+}
+```
+
+# 1. Business context and analytical objectives
+
+The Portland Trail Blazers faced declining attendance and the challenge of attracting customers to multigame ticket packages. These packages combine several games into one purchase and may include preferred seating and promotional benefits. Package design is therefore a joint **consumer-preference and managerial decision**: an attractive offer must also respect seat-pricing policies and the costs of providing its features.
+
+The case reports a survey of previous multigame or season-ticket purchasers who were **not current season-ticket holders**. Of 960 people contacted, 204 submitted valid responses (approximately 21%); respondents completed 20 conjoint choice tasks. The supplied analytical workbook contains **attribute-level part-worth utility estimates**, not the individual choice-task records. Consequently, this project uses those supplied utility estimates as model inputs. It does not claim to estimate individual-level choice coefficients from the unavailable survey responses.
+
+The analysis addresses four questions:
+
+1. **Preferences:** Which ticket-package attributes and levels are associated with stronger stated preferences?
+2. **Economic valuation:** How can utility differences inform willingness-to-pay and attribute trade-offs?
+3. **Product decisions:** Which packages satisfy management's price and seat restrictions, and how do their utilities and costs compare?
+4. **Robustness:** Which conclusions depend on pricing assumptions, cost definitions, and model specifications?
+
+**Module 1** establishes the data foundation: it imports the workbook, validates the inputs, examines the utility and cost distributions, and identifies issues that must be addressed before willingness-to-pay and package evaluation. Subsequent modules perform the full valuation and decision analysis.
+
+# 2. Data sources and measurement
+
+The principal input is `Portland Trail Blazers_Keman_Xiang.xlsx`. The `Table 1. Utility score data.` worksheet provides the attribute-level utility estimates. The `Product Analysis` worksheet provides corresponding numeric levels, seat-cost allocations, and promotional-item costs. Other workbook sheets (`Utility per Cost`, `Willingness to pay`, and `Attribute Tradeoff`) contain downstream calculations and are not treated as independent observations.
+
+The survey considered four package attributes: **number of games** (3, 6, 10), **ticket price** ($15, $25, $35, $60 per seat per game), **seat location** (four levels), and **promotional item** (five levels). The 16 levels are estimated *part-worths*, not 16 respondents or 16 transactions.
+
+The case also specifies two management restrictions: **200-level midcourt seats cannot be sold below $60**, and **300-level midcourt seats cannot be sold below $25**. These restrictions will enter the feasible-package analysis in Module 4. The seat costs are management's allocated minimum-cost figures; they should not automatically be interpreted as incremental cash costs. The promotional-item costs are reported separately. In particular, the case describes a hot dog and soda offered with each ticket but quotes a negotiated cost of $3.25 **per package**; this ambiguity must be resolved or tested before interpreting package-level profitability.
+
+# 3. Data input and parsing
+
+## 3.1 Locate the workbook and inspect its worksheets
+
+The code locates the Excel file without modifying it. Reading worksheet names first prevents silent use of an incorrect file or tab.
+
+```{r workbook-sheets}
+expected_sheets <- c("Table 1. Utility score data.", "Product Analysis",
+                     "Utility per Cost", "Willingness to pay", "Attribute Tradeoff")
+actual_sheets <- readxl::excel_sheets(input_path)
+check(all(expected_sheets %in% actual_sheets),
+      paste("Missing workbook sheets:", paste(setdiff(expected_sheets, actual_sheets), collapse = ", ")))
+knitr::kable(data.frame(worksheet = actual_sheets), caption = "Worksheets in the project input file")
+```
+
+## 3.2 Import the part-worth utilities
+
+The utility table is organized into four attribute sections. Each section begins with a `Utility` header, followed by its attribute levels. Reading both columns as **text** protects negative values that use an en dash or Unicode minus sign; the parser then converts these characters to a standard minus before numeric conversion. The source row is retained for traceability.
+
+```{r import-utilities}
+raw_utility <- readxl::read_excel(input_path,
+  sheet = "Table 1. Utility score data.", range = "B2:C21",
+  col_names = FALSE, col_types = "text", .name_repair = "minimal")
+
+attribute_names <- c("Number of Games", "Ticket Price", "Ticket Location", "Promotional Item")
+current_attribute <- NA_character_
+records <- list()
+for (i in seq_len(nrow(raw_utility))) {
+  left <- clean_text(raw_utility[[1]][i]); right <- clean_text(raw_utility[[2]][i])
+  if (identical(left, "Utility") && right %in% attribute_names) {
+    current_attribute <- right
+  } else if (!is.na(current_attribute) && !is.na(right) && nzchar(right)) {
+    value <- num(left)
+    check(is.finite(value), paste("Invalid utility in source row", i + 1L, ":", left))
+    records[[length(records) + 1L]] <- data.frame(
+      attribute = current_attribute, level_label = right,
+      utility = value, source_utility_row = i + 1L)
+  }
+}
+partworth <- dplyr::bind_rows(records) |>
+  dplyr::group_by(attribute) |>
+  dplyr::mutate(level_id = dplyr::row_number()) |>
+  dplyr::ungroup() |>
+  dplyr::select(attribute, level_id, level_label, utility, source_utility_row)
+knitr::kable(partworth, digits = 5, caption = "Imported conjoint part-worth utilities")
+```
+
+**Interpretation.** Positive part-worths indicate a level with higher relative utility under the table's coding convention; negative part-worths indicate lower relative utility. A negative number is **not** a negative probability or a monetary loss. Meaningful comparisons are differences between levels and total utility for specified package profiles. Utility levels should not be compared as standalone dollar amounts.
+
+## 3.3 Import the corresponding costs and numeric levels
+
+The `Product Analysis` sheet stores its attribute-level input table in columns B–E. This is distinct from its wide product-combination calculation area. We read only the compact input range, match each level to the utility table, and check that the utility value agrees across the two sheets. The matching uses **attribute + utility**, which is unique in this workbook; the matched source labels remain visible for auditing.
+
+```{r import-costs}
+raw_product <- readxl::read_excel(input_path, sheet = "Product Analysis",
+  range = "B1:E17", col_names = FALSE, col_types = "text", .name_repair = "minimal")
+product_inputs <- data.frame(
+  attribute_raw = clean_text(raw_product[[1]]),
+  product_level = clean_text(raw_product[[2]]),
+  utility_product = num(raw_product[[3]]),
+  cost_usd = num(raw_product[[4]]),
+  source_product_row = seq_len(nrow(raw_product)), stringsAsFactors = FALSE) |>
+  dplyr::filter(is.finite(utility_product)) |>
+  dplyr::mutate(attribute = dplyr::case_when(
+    tolower(attribute_raw) == "number of games" ~ "Number of Games",
+    tolower(attribute_raw) == "ticket price" ~ "Ticket Price",
+    tolower(attribute_raw) == "ticket location" ~ "Ticket Location",
+    tolower(attribute_raw) == "promotional item" ~ "Promotional Item",
+    TRUE ~ NA_character_))
+check(nrow(product_inputs) == 16L && !anyNA(product_inputs$attribute),
+      "The Product Analysis input table must contain 16 recognized attribute levels.")
+
+# Exact utility matching is used only as an alignment key; values are checked below.
+match_key <- function(attribute, utility) paste(attribute, sprintf("%.5f", utility), sep = "||")
+key_utility <- match_key(partworth$attribute, partworth$utility)
+key_product <- match_key(product_inputs$attribute, product_inputs$utility_product)
+check(!anyDuplicated(key_utility) && !anyDuplicated(key_product),
+      "Utility matching is not unique within an attribute.")
+idx <- match(key_utility, key_product)
+check(!anyNA(idx) && length(unique(idx)) == 16L,
+      "Utility levels could not be matched one-to-one between source worksheets.")
+partworth$product_level <- product_inputs$product_level[idx]
+partworth$cost_usd <- product_inputs$cost_usd[idx]
+partworth$source_product_row <- product_inputs$source_product_row[idx]
+partworth$level_numeric <- ifelse(partworth$attribute %in% c("Number of Games", "Ticket Price"),
+                                   num(partworth$product_level), NA_real_)
+check(all(abs(partworth$utility - product_inputs$utility_product[idx]) < 1e-9),
+      "Part-worth utilities disagree between source sheets.")
+knitr::kable(partworth[, c("attribute", "product_level", "utility", "cost_usd")],
+             digits = 5, caption = "Aligned utility estimates and cost inputs")
+```
+
+**Interpretation.** The `cost_usd` field is populated for seat locations and promotional items; missing costs for game-count and ticket-price levels mean **not applicable**, not zero cost. Ticket price is revenue per seat per game, whereas the reported cost values have their own accounting definitions. They should not be combined into a package-profit figure without specifying the number of games and cost frequency.
+
+# 4. Data validation
+
+Validation covers the experimental design, numerical values, consistency across worksheets, and the expected price ordering. The zero-sum check is included as a descriptive check on the supplied effect-centered utility scores; it does not identify or validate the unknown original estimation algorithm.
+
+```{r validate-data}
+expected_counts <- c("Number of Games" = 3L, "Ticket Price" = 4L,
+                     "Ticket Location" = 4L, "Promotional Item" = 5L)
+counts <- table(factor(partworth$attribute, levels = names(expected_counts)))
+price <- partworth |> dplyr::filter(attribute == "Ticket Price") |>
+  dplyr::arrange(level_numeric)
+games <- partworth |> dplyr::filter(attribute == "Number of Games") |>
+  dplyr::arrange(level_numeric)
+location <- partworth |> dplyr::filter(attribute == "Ticket Location")
+promotion <- partworth |> dplyr::filter(attribute == "Promotional Item")
+
+validation <- data.frame(
+  test = c("Expected source sheets present", "Four attributes and 16 levels",
+    "Expected number of levels per attribute", "No missing or non-finite utilities",
+    "Unique attribute/level labels", "One-to-one alignment across source sheets",
+    "Game counts: 3, 6, 10", "Ticket prices: 15, 25, 35, 60",
+    "Price utility decreases with price", "Seat and promotion costs are nonnegative and complete",
+    "No cost entries assigned to game-count or ticket-price levels",
+    "Attribute-level utility sums approximately zero"),
+  passed = c(all(expected_sheets %in% actual_sheets),
+    nrow(partworth) == 16L && length(unique(partworth$attribute)) == 4L,
+    identical(as.integer(counts), as.integer(expected_counts)),
+    all(is.finite(partworth$utility)),
+    !anyDuplicated(partworth[c("attribute", "level_label")]),
+    length(unique(idx)) == 16L,
+    identical(as.numeric(games$level_numeric), c(3, 6, 10)),
+    identical(as.numeric(price$level_numeric), c(15, 25, 35, 60)),
+    all(diff(price$utility) < 0),
+    all(is.finite(c(location$cost_usd, promotion$cost_usd))) &&
+      all(c(location$cost_usd, promotion$cost_usd) >= 0),
+    all(is.na(partworth$cost_usd[partworth$attribute %in% c("Number of Games", "Ticket Price")])),
+    all(abs(tapply(partworth$utility, partworth$attribute, sum)) < 1e-4)))
+knitr::kable(validation, caption = "Input quality and consistency checks")
+check(all(validation$passed), "A data validation test failed; inspect the table above.")
+```
+
+**Validation result.** `r sum(validation$passed)` of `r nrow(validation)` checks passed. The dataset contains `r nrow(partworth)` validated levels across `r length(unique(partworth$attribute))` attributes. The price levels are correctly ordered and their part-worth utilities decrease as price rises. This is an **input and computational consistency assessment**, not evidence of predictive validity or respondent-level model fit.
+
+# 5. Exploratory analysis
+
+## 5.1 Attribute-level utilities
+
+The figure shows the relative desirability of each level within its attribute. Faceting prevents different categories from being interpreted as one continuous numerical scale.
+
+```{r plot-partworth, fig.cap="Conjoint part-worth utilities by attribute level"}
+partworth_plot <- ggplot(partworth,
+  aes(x = reorder(level_label, utility), y = utility)) +
+  geom_col(fill = "#2F617B", width = 0.72) +
+  coord_flip() + facet_wrap(~attribute, scales = "free_y", ncol = 2) +
+  geom_hline(yintercept = 0, colour = "grey45", linewidth = 0.3) +
+  labs(x = NULL, y = "Part-worth utility") +
+  theme_minimal(base_size = 11) + theme(strip.text = element_text(face = "bold"))
+print(partworth_plot)
+save_plot(partworth_plot, "01_partworth_utilities.png", 12, 9)
+```
+
+**Results and interpretation.** Within the number-of-games attribute, the six-game package has the highest utility (`r sprintf('%.5f', max(games$utility))`), while the ten-game option has the lowest (`r sprintf('%.5f', min(games$utility))`). This indicates that preference is **not monotonic in package size**: offering more games does not necessarily increase attractiveness. Within seat locations, 200-level midcourt has the highest utility, but its minimum allowed price is $60. The hot dog-and-soda option has the highest promotional utility, whereas no promotional item has the lowest. These patterns describe the supplied utility estimates; they do not by themselves establish sales volume or profitability.
+
+## 5.2 Utility ranges and relative attribute importance
+
+The range of an attribute is the difference between its largest and smallest part-worths. Dividing each range by the sum of the four ranges produces a **descriptive relative-importance measure**:
+
+$$
+I_a = \frac{\max_{\ell}(u_{a\ell}) - \min_{\ell}(u_{a\ell})}
+{\sum_b [\max_{\ell}(u_{b\ell}) - \min_{\ell}(u_{b\ell})]}.
+$$
+
+This measure depends on the levels selected for each attribute. It should not be interpreted as a universal or causal measure of what matters to all fans.
+
+```{r importance-table}
+importance <- partworth |>
+  dplyr::group_by(attribute) |>
+  dplyr::summarise(n_levels = dplyr::n(), min_utility = min(utility),
+                   max_utility = max(utility), utility_range = max(utility) - min(utility),
+                   utility_sum = sum(utility), .groups = "drop") |>
+  dplyr::mutate(relative_importance = utility_range / sum(utility_range)) |>
+  dplyr::arrange(desc(relative_importance))
+knitr::kable(importance, digits = 5, caption = "Utility ranges and relative attribute importance")
+```
+
+```{r plot-importance, fig.cap="Relative attribute importance based on utility ranges"}
+importance_plot <- ggplot(importance, aes(x = reorder(attribute, relative_importance),
+                                         y = relative_importance)) +
+  geom_col(fill = "#2F617B", width = 0.65) + coord_flip() +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1),
+                     limits = c(0, max(importance$relative_importance) * 1.18)) +
+  labs(x = NULL, y = "Share of total utility range") + theme_minimal(base_size = 11)
+print(importance_plot)
+save_plot(importance_plot, "01_attribute_importance.png", 8, 5)
+```
+
+**Results and interpretation.** The two leading attributes are **ticket location** (`r scales::percent(importance$relative_importance[importance$attribute == 'Ticket Location'], accuracy = 0.01)`) and **ticket price** (`r scales::percent(importance$relative_importance[importance$attribute == 'Ticket Price'], accuracy = 0.01)`). Number of games and promotional items contribute smaller shares of the total observed utility range. However, a low promotional-attribute range does **not** imply that all giveaways are uneconomic; that requires comparing the **incremental utility relative to no promotion** with the actual cost of each benefit, as developed in Module 3.
+
+## 5.3 Price–utility relationship
+
+Ticket price is measured in dollars **per seat per game**. Plotting price on its actual numeric scale, rather than at equally spaced category positions, makes differences in price sensitivity visible.
+
+```{r price-table}
+price_steps <- data.frame(
+  price_from = head(price$level_numeric, -1),
+  price_to = tail(price$level_numeric, -1),
+  utility_change = diff(price$utility),
+  utility_per_dollar = diff(price$utility) / diff(price$level_numeric))
+knitr::kable(price_steps, digits = 6, caption = "Adjacent price-level utility changes")
+```
+
+```{r plot-price, fig.cap="Price part-worths at their observed dollar levels"}
+price_plot <- ggplot(price, aes(x = level_numeric, y = utility)) +
+  geom_line(color = "#2F617B", linewidth = 0.85) +
+  geom_point(color = "#2F617B", size = 2.8) +
+  scale_x_continuous(breaks = price$level_numeric) +
+  labs(x = "Ticket price (USD per seat per game)", y = "Part-worth utility") +
+  theme_minimal(base_size = 11)
+print(price_plot)
+save_plot(price_plot, "01_price_utility.png", 8, 5)
+```
+
+**Results and interpretation.** Higher prices consistently reduce utility, but the slope is not constant. Between $15 and $25, utility changes by `r sprintf('%.5f', price_steps$utility_change[1])`; between $25 and $35, by `r sprintf('%.5f', price_steps$utility_change[2])`; and between $35 and $60, by `r sprintf('%.5f', price_steps$utility_change[3])`. A single dollar-per-utility conversion would conceal these differences. Module 3 will therefore compare clearly defined local-slope and piecewise-price approaches to WTP rather than assuming one globally linear price effect.
+
+## 5.4 Seat and promotion costs
+
+The cost schedule provides the managerial side of the package-design problem. Seat-location costs are allocated amounts specified by the case; promotional items carry direct reported costs. They are displayed in separate panels because their economic interpretations and potential units differ.
+
+```{r cost-table}
+costs <- partworth |>
+  dplyr::filter(attribute %in% c("Ticket Location", "Promotional Item")) |>
+  dplyr::select(attribute, level_label, cost_usd, utility)
+knitr::kable(costs, digits = 5, caption = "Reported seat-location and promotional-item costs")
+```
+
+```{r plot-costs, fig.cap="Reported seat-location and promotional-item costs (USD; accounting units require care)"}
+cost_plot <- ggplot(costs, aes(x = reorder(level_label, cost_usd), y = cost_usd)) +
+  geom_col(fill = "#2F617B", width = 0.7) + coord_flip() +
+  facet_wrap(~attribute, scales = "free_y", ncol = 1) +
+  labs(x = NULL, y = "Reported cost (USD)") + theme_minimal(base_size = 11)
+print(cost_plot)
+save_plot(cost_plot, "01_attribute_costs.png", 10, 8)
+```
+
+**Results and interpretation.** The 200-level midcourt seat has the highest reported seat-cost allocation ($`r sprintf('%.2f', max(location$cost_usd))`). Apparel has the highest promotional cost ($`r sprintf('%.2f', max(promotion$cost_usd))`). Playoff-ticket priority and no promotion have zero **reported direct promotional cost**. A zero direct cost is not a claim that the option has no opportunity cost or operational consequences. The financial analysis must distinguish reported cost allocations from incremental costs and must state how a promotion is delivered across a multigame package.
+
+## 5.5 Design space and business restrictions
+
+With four attributes, the full factorial design contains `r prod(as.integer(counts))` possible combinations before pricing restrictions. For each number of games, two of the four seat locations allow all four prices, 300-level midcourt allows three, and 200-level midcourt allows only $60. The feasible design therefore contains **3 × (4 + 4 + 3 + 1) × 5 = 180** profiles. Module 4 will generate these combinations explicitly and verify their utilities and costs.
+
+```{r design-count}
+design_summary <- data.frame(
+  metric = c("Attributes", "Attribute levels", "Full factorial profiles", "Feasible profiles after seat-price rules"),
+  count = c(length(counts), sum(counts), prod(as.integer(counts)), 3 * (4 + 4 + 3 + 1) * 5))
+knitr::kable(design_summary, caption = "Design-space overview")
+```
+
+**Interpretation.** The 180 feasible profiles are **possible product configurations**, not 180 survey respondents, observed purchases, or independent choice-task observations. Their role is to define the management decision set for later analysis.
+
+# 6. Export validated inputs and figures
+
+The following files make the remaining modules reproducible. They are generated from the source workbook at knit time; no utility estimates or cost amounts are manually substituted in the analysis code.
+
+```{r export-data}
+utils::write.csv(partworth,
+  file.path(project_root, "data", "processed", "partworth_levels.csv"), row.names = FALSE, na = "")
+utils::write.csv(costs,
+  file.path(project_root, "data", "processed", "attribute_costs.csv"), row.names = FALSE, na = "")
+save_table(validation, "01_data_validation.csv")
+save_table(importance, "01_attribute_importance.csv")
+save_table(price_steps, "01_price_utility_intervals.csv")
+save_table(design_summary, "01_design_summary.csv")
+
+outputs <- data.frame(
+  category = c(rep("Processed data", 2), rep("Table", 4), rep("Figure", 4)),
+  file = c("data/processed/partworth_levels.csv", "data/processed/attribute_costs.csv",
+    "outputs/tables/01_data_validation.csv", "outputs/tables/01_attribute_importance.csv",
+    "outputs/tables/01_price_utility_intervals.csv", "outputs/tables/01_design_summary.csv",
+    "outputs/figures/01_partworth_utilities.png", "outputs/figures/01_attribute_importance.png",
+    "outputs/figures/01_price_utility.png", "outputs/figures/01_attribute_costs.png"))
+knitr::kable(outputs, caption = "Module 1 output manifest")
+```
+
+# 7. Findings and implications for subsequent analysis
+
+The validated data show that **seat location and price account for the largest relative utility ranges**, while **six-game packages** are preferred to both three-game and ten-game packages at the supplied utility levels. Promotional preferences also differ substantially across items; they must be evaluated against their costs, not dismissed because their overall importance is lower. The price–utility relationship is downward sloping but **nonlinear across the observed price levels**, an important consideration for willingness-to-pay estimates.
+
+The next modules will use these inputs to calculate additive package utilities, evaluate incremental attribute values, and compare feasible ticket configurations. Product utility is **not equivalent to purchase probability or profit**. Without respondent-level choices, a calibrated outside option, and a defensible demand model, the project cannot infer actual sales or total-profit-maximizing packages from the part-worth table alone.
+
+## Research limitations
+
+- **Data granularity:** The workbook supplies aggregate attribute-level utility estimates rather than respondent-by-task choices. Individual-level heterogeneity, standard errors, and out-of-sample choice prediction cannot be estimated from these inputs alone.
+- **Sampling:** The surveyed population consists of previous ticket purchasers, not a probability sample of all potential customers. The estimates should not be generalized beyond this population without further evidence.
+- **Model structure:** Additive part-worths support transparent profile comparisons but do not establish interaction effects, an outside option, or absolute purchase probabilities.
+- **Accounting definitions:** Seat-cost allocations and promotional costs require careful interpretation when moving from per-ticket price to multigame-package economics.
+- **Historical setting:** The case describes a particular team and period. The results should not be treated as contemporary ticket-market evidence.
+
+# References and data provenance
+
+- Wilcox, Ronald T. *Portland Trail Blazers* (Darden Business Publishing case UV2971; revised April 2017). Case background, survey design, utility table, management constraints, and cost tables.
+- Xiang, Keman. `Portland Trail Blazers_Keman_Xiang.xlsx`. Primary numerical input for this analysis, including `Table 1. Utility score data.` and `Product Analysis`.
+- Xiang, Keman. *Assignment 3*. Written interpretation of attribute importance, pricing trade-offs, and promotional items.
+- *Conjoint-2023*, *Week 3 Conjoint Analysis (II) 2023*, and *Dummy_variables*. Methodological teaching references; they are **not** treated as additional Portland respondent data.
+

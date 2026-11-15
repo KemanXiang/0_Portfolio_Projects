@@ -1,0 +1,11 @@
+"check","passed"
+"Full design contains 240 profiles",TRUE
+"Feasible design contains 180 profiles",TRUE
+"Exactly 60 designs violate pricing policy",TRUE
+"All feasible seat-price pairs satisfy policy",TRUE
+"Utility equals the four part-worth contributions",TRUE
+"Scenario A contribution identity holds",TRUE
+"Scenario B contribution identity holds",TRUE
+"Promotion cost scenario ordering holds",TRUE
+"Utility optimum belongs to both frontiers",TRUE
+"No missing package utility or cost inputs",TRUE

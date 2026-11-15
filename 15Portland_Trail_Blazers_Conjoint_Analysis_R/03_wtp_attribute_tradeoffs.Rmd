@@ -1,0 +1,582 @@
+---
+title: "Portland Trail Blazers: Conjoint Analysis for Ticket Package Design, Pricing, and Economic Decision-Making"
+subtitle: "Module 3 | Willingness-to-Pay & Attribute Trade-off Analysis"
+author: "Keman Xiang"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: readable
+    highlight: tango
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.width = 9, fig.height = 5.5, dpi = 140)
+required <- c("dplyr", "tidyr", "ggplot2", "knitr", "scales")
+missing <- required[!vapply(required, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing)) stop("Install required packages: ", paste(missing, collapse = ", "))
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# Knit from the project root or its R/ subdirectory.
+root_candidates <- c(".", "..")
+roots <- root_candidates[file.exists(file.path(root_candidates, "data", "processed", "partworth_levels.csv"))]
+if (!length(roots)) stop("Run 01_data_input_validation_eda.Rmd first; missing data/processed/partworth_levels.csv")
+project_root <- normalizePath(roots[[1]], mustWork = TRUE)
+input_path <- file.path(project_root, "data", "processed", "partworth_levels.csv")
+source_workbook <- file.path(project_root, "data", "Portland Trail Blazers_Keman_Xiang.xlsx")
+if (!file.exists(source_workbook)) stop("Source Excel workbook not found: ", source_workbook)
+output_tables <- file.path(project_root, "outputs", "tables")
+output_figures <- file.path(project_root, "outputs", "figures")
+dir.create(output_tables, recursive = TRUE, showWarnings = FALSE)
+dir.create(output_figures, recursive = TRUE, showWarnings = FALSE)
+assert <- function(x, message) if (!isTRUE(x)) stop(message, call. = FALSE)
+fmt <- function(x, digits = 3) formatC(x, digits = digits, format = "f")
+money <- function(x) paste0("$", fmt(x, 2))
+save_table <- function(x, name) utils::write.csv(x, file.path(output_tables, name), row.names = FALSE, na = "")
+save_figure <- function(p, name, width = 9, height = 5.5) {
+  ggplot2::ggsave(file.path(output_figures, name), p, width = width, height = height, dpi = 180)
+}
+```
+
+# 1. Business context and research objectives
+
+The Portland Trail Blazers use multigame ticket packages to balance consumer appeal, ticket revenue, seating restrictions, and the cost of promotional benefits. In the case setting, falling attendance and pressure on ticket sales make it important to understand not only which features fans prefer, but also **how much additional ticket price a feature can support**. A high-utility attribute may be expensive to supply; conversely, a relatively inexpensive benefit may deliver substantial perceived value.
+
+The project evaluates four attributes—number of games, ticket price per seat per game, seat location, and promotional item—using the part-worth utility inputs in `Portland Trail Blazers_Keman_Xiang.xlsx`. The underlying case reports 204 valid survey responses from 960 contacted former ticket buyers and 20 conjoint tasks per respondent. The available project inputs are the **reported attribute-level utility estimates**. Consequently, this module evaluates monetary trade-offs implied by those estimates rather than fitting new choice coefficients or estimating confidence intervals.
+
+This module answers three questions:
+
+1. **Price sensitivity:** Is the marginal disutility of price approximately constant across the observed ticket-price levels?
+2. **Willingness-to-pay (WTP):** What monetary equivalents can be assigned to changes in games, seats, and promotional features, and how do those equivalents depend on the reference price?
+3. **Promotional economics and trade-offs:** Which benefits provide positive incremental utility relative to no promotion, and how do their monetary equivalents compare with reported direct costs?
+
+The analysis proceeds from the price-utility curve to local and piecewise WTP, then to promotional valuation and concrete seat-price comparisons. The following module will combine these consumer-side results with the full feasible package set and clearly defined financial assumptions.
+
+# 2. Data inputs, definitions, and validation
+
+## 2.1 Analytical inputs and unit of observation
+
+The project reads `data/processed/partworth_levels.csv`, written by **Module 1 — Data Input, Validation & Exploratory Analysis** directly from the workbook. The dataset contains one row per attribute level, with its estimated part-worth utility and, where applicable, a reported cost. Module 2 uses the same inputs to calculate utility ranges and package-level systematic utility.
+
+Ticket price is **USD per seat per game**. A price-equivalent WTP in this module is therefore initially expressed in **USD per seat per game**, not automatically per six-game package or per customer relationship. Reported promotion costs are compared separately and should not be multiplied by game count unless the benefit's delivery frequency is established.
+
+```{r input-data}
+partworth <- utils::read.csv(input_path, stringsAsFactors = FALSE, check.names = FALSE,
+                             na.strings = c("", "NA"))
+required_cols <- c("attribute", "level_id", "product_level", "utility", "cost_usd")
+assert(all(required_cols %in% names(partworth)),
+       paste("Missing columns:", paste(setdiff(required_cols, names(partworth)), collapse = ", ")))
+partworth$level_id <- as.integer(partworth$level_id)
+partworth$utility <- as.numeric(partworth$utility)
+partworth$cost_usd <- as.numeric(partworth$cost_usd)
+attribute_order <- c("Number of Games", "Ticket Price", "Ticket Location", "Promotional Item")
+partworth <- partworth |>
+  arrange(match(attribute, attribute_order), level_id)
+assert(nrow(partworth) == 16L && !anyNA(partworth$utility), "Invalid 16-level utility input")
+assert(identical(as.integer(table(factor(partworth$attribute, levels = attribute_order))),
+                 c(3L, 4L, 4L, 5L)), "Unexpected attribute-level counts")
+assert(!anyDuplicated(partworth[c("attribute", "level_id")]), "Duplicate attribute-level keys")
+
+price <- partworth |> filter(attribute == "Ticket Price") |>
+  mutate(price_usd = suppressWarnings(as.numeric(product_level))) |>
+  arrange(price_usd)
+assert(identical(price$price_usd, c(15, 25, 35, 60)), "Unexpected ticket-price levels")
+assert(all(diff(price$utility) < 0), "Price utility must decrease across the observed levels")
+assert(all(is.finite(partworth$cost_usd[partworth$attribute %in%
+                  c("Ticket Location", "Promotional Item")])),
+       "Seat and promotion costs must be present and numeric")
+
+knitr::kable(partworth[, c("attribute", "level_id", "product_level", "utility", "cost_usd")],
+             digits = 5, caption = "Validated conjoint part-worths and reported costs")
+```
+
+**Interpretation.** The table contains `r nrow(partworth)` attribute-level estimates across four attributes. The part-worths measure relative systematic utility; they are neither direct monetary values nor observed purchase probabilities. The price levels provide the conversion scale for the WTP calculations below. Costs are included to distinguish consumers' implied valuations from the provider's expenses.
+
+## 2.2 Define a transparent lookup and valuation convention
+
+An additive utility model implies that changing one nonprice attribute from level $a$ to level $b$ produces
+
+$$\Delta U=u_b-u_a.$$
+
+A **positive** $\Delta U$ indicates a preferred improvement, holding all other attributes constant. If ticket price rises from $p_0$ to $p_1$, the monetary compensation condition is
+
+$$u_P(p_1)-u_P(p_0)=-\Delta U.$$
+
+This module reports two different monetary concepts:
+
+- **Local-slope WTP:** divide $\Delta U$ by the absolute price-utility slope in a specified interval. This is a linear approximation that can exceed the interval used to calculate it.
+- **Piecewise compensating price increment:** linearly interpolate *between observed price points*, then solve $u_P(p_1)=u_P(p_0)-\Delta U$ when that target lies within the observed $15–$60 domain. If the required price lies outside that domain, the estimate is **not identified without extrapolation** and is reported as unavailable.
+
+Neither approach provides sampling uncertainty because individual choice observations and coefficient covariance estimates are unavailable.
+
+```{r lookup-functions}
+lookup_level <- function(attribute_name, id) {
+  z <- partworth |> filter(attribute == attribute_name, level_id == id)
+  assert(nrow(z) == 1L, paste("Missing level:", attribute_name, id))
+  z
+}
+lookup_u <- function(attribute_name, id) lookup_level(attribute_name, id)$utility[[1]]
+lookup_label <- function(attribute_name, id) as.character(lookup_level(attribute_name, id)$product_level[[1]])
+```
+
+# 3. Price sensitivity and nonlinearity
+
+## 3.1 Price part-worths and observed marginal slopes
+
+The ticket-price attribute has four levels: $15, $25, $35, and $60 per seat per game. The project treats the supplied price part-worths as categorical estimates. Therefore, the marginal utility of one dollar is **not assumed constant**. For two adjacent levels $p_a<p_b$:
+
+$$s_{a,b}=\frac{u_P(p_b)-u_P(p_a)}{p_b-p_a},\qquad s_{a,b}<0.$$
+
+The magnitude $|s_{a,b}|$ gives the utility loss per additional dollar **within that observed interval under a linear interpolation assumption**.
+
+```{r price-slopes}
+price_steps <- data.frame(
+  price_from = head(price$price_usd, -1),
+  price_to = tail(price$price_usd, -1),
+  utility_from = head(price$utility, -1),
+  utility_to = tail(price$utility, -1)) |>
+  mutate(price_change_usd = price_to - price_from,
+         utility_change = utility_to - utility_from,
+         slope_utility_per_usd = utility_change / price_change_usd,
+         usd_per_utility = 1 / abs(slope_utility_per_usd),
+         interval = paste0("$", price_from, "–$", price_to))
+
+full_range_slope <- (tail(price$utility, 1) - head(price$utility, 1)) /
+                    (tail(price$price_usd, 1) - head(price$price_usd, 1))
+assert(all(price_steps$slope_utility_per_usd < 0), "Non-monotone price slopes")
+knitr::kable(price_steps, digits = 6,
+             caption = "Observed price intervals and utility-per-dollar conversion rates")
+```
+
+**Results and interpretation.** The absolute price slopes are `r fmt(abs(price_steps$slope_utility_per_usd[1]), 5)`, `r fmt(abs(price_steps$slope_utility_per_usd[2]), 5)`, and `r fmt(abs(price_steps$slope_utility_per_usd[3]), 5)` utility units per dollar. The $25–$35 segment is markedly flatter than the neighboring intervals. In this range, the same utility improvement produces a much larger *local* monetary equivalent. This variation makes a single global price coefficient potentially misleading.
+
+```{r plot-price-curve, fig.cap="Price part-worths and observed segment slopes"}
+p_price <- ggplot(price, aes(price_usd, utility)) +
+  geom_hline(yintercept = 0, linewidth = 0.3, color = "grey65") +
+  geom_line(linewidth = 0.9, color = "#236C86") +
+  geom_point(size = 3, color = "#236C86") +
+  geom_text(aes(label = sprintf("%.5f", utility)), vjust = -0.8, size = 3.5) +
+  scale_x_continuous(breaks = price$price_usd) +
+  labs(x = "Price (USD per seat per game)", y = "Price part-worth utility") +
+  theme_minimal(base_size = 12)
+print(p_price)
+save_figure(p_price, "03_price_partworth_nonlinearity.png")
+```
+
+**Figure interpretation.** The line joins four *observed* utility estimates; the connecting segments are a transparent interpolation convention, not an independently estimated continuous demand curve. Utility declines with price, but the rate of decline varies. The $25–$35 segment should not be used to extrapolate WTP beyond its interval without explicitly labeling the result as an approximation.
+
+## 3.2 Quantify the consequence of a single price coefficient
+
+A useful diagnostic compares the observed categorical price part-worths with a simple linear approximation. This regression uses **four aggregated attribute-level estimates**; its residuals are a measure of approximation error.
+
+```{r linear-price-diagnostic}
+linear_price_fit <- stats::lm(utility ~ price_usd, data = price)
+price$linear_approximation <- as.numeric(stats::predict(linear_price_fit, newdata = price))
+price$approximation_error <- price$utility - price$linear_approximation
+price_fit_summary <- data.frame(
+  metric = c("Linear slope (utility per USD)", "Maximum absolute approximation error",
+             "Root mean squared approximation error", "Full-range secant slope"),
+  value = c(unname(coef(linear_price_fit)[[2]]),
+            max(abs(price$approximation_error)),
+            sqrt(mean(price$approximation_error^2)), full_range_slope))
+knitr::kable(price_fit_summary, digits = 6,
+             caption = "Descriptive diagnostics of a single linear price approximation")
+```
+
+**Interpretation.** The fitted straight line summarizes the overall downward trend, but its approximation errors show how much it departs from the four observed levels. The full-range secant slope, `r fmt(full_range_slope, 6)` utility units per dollar, is a separate endpoint-based conversion; it should not be confused with the fitted regression slope or the local slopes.
+
+# 4. Attribute improvements and willingness-to-pay
+
+## 4.1 Construct meaningful within-attribute improvements
+
+WTP is calculated for improvements within the number-of-games, seating, and promotion attributes. Every comparison is explicitly identified by its starting and ending level. For promotions, **no promotion** is the reference, so the measured benefit is the incremental utility of providing an item rather than the item's absolute part-worth.
+
+```{r attribute-improvements}
+make_change <- function(attribute_name, from_id, to_id, group) {
+  data.frame(group = group, attribute = attribute_name,
+             from_id = from_id, to_id = to_id,
+             from_level = lookup_label(attribute_name, from_id),
+             to_level = lookup_label(attribute_name, to_id),
+             delta_utility = lookup_u(attribute_name, to_id) - lookup_u(attribute_name, from_id),
+             stringsAsFactors = FALSE)
+}
+changes <- dplyr::bind_rows(
+  make_change("Number of Games", 1, 2, "Games"),
+  make_change("Number of Games", 3, 1, "Games"),
+  make_change("Number of Games", 3, 2, "Games"),
+  make_change("Ticket Location", 1, 2, "Seating"),
+  make_change("Ticket Location", 1, 3, "Seating"),
+  make_change("Ticket Location", 1, 4, "Seating"),
+  make_change("Ticket Location", 2, 3, "Seating"),
+  make_change("Ticket Location", 3, 4, "Seating"),
+  make_change("Promotional Item", 5, 1, "Promotions"),
+  make_change("Promotional Item", 5, 2, "Promotions"),
+  make_change("Promotional Item", 5, 3, "Promotions"),
+  make_change("Promotional Item", 5, 4, "Promotions"))
+assert(all(changes$delta_utility > 0), "Each specified comparison must be a utility improvement")
+knitr::kable(changes[, c("group", "from_level", "to_level", "delta_utility")],
+             digits = 5, caption = "Positive utility gains for selected attribute changes")
+```
+
+**Results and interpretation.** Increasing package size from three to six games yields `r fmt(changes$delta_utility[1], 5)` additional utility units, while changing from ten to six games yields `r fmt(changes$delta_utility[3], 5)`. This reinforces that the six-game option is preferred to both alternatives in the supplied estimates. Replacing no promotion with hot dog and soda adds `r fmt(changes$delta_utility[10], 5)` utility units, which can now be compared with ticket-price disutility and reported costs.
+
+## 4.2 Local-slope WTP across the three price intervals
+
+For a positive improvement $\Delta U$, the local-slope monetary equivalent in interval $k$ is
+
+$$\widehat{WTP}_{k}^{\mathrm{local}}=\frac{\Delta U}{|s_k|}.$$
+
+This calculation is informative as a **slope sensitivity analysis**. It does not imply that a consumer would necessarily pay the resulting amount, especially if the result extends beyond the price interval used for conversion.
+
+```{r local-wtp}
+local_wtp <- tidyr::crossing(changes, price_steps[, c("interval", "price_from", "price_to",
+                                                   "slope_utility_per_usd")]) |>
+  mutate(wtp_local_usd = delta_utility / abs(slope_utility_per_usd),
+         within_interval_width = wtp_local_usd <= (price_to - price_from) + 1e-10)
+knitr::kable(local_wtp |>
+               select(group, from_level, to_level, interval, delta_utility,
+                      wtp_local_usd, within_interval_width),
+             digits = 3, caption = "Local-slope WTP and interval-width diagnostic")
+```
+
+**Interpretation.** The same utility gain produces different monetary equivalents depending on the interval. For the three-to-six-game improvement, local-slope WTP is `r money(local_wtp$wtp_local_usd[local_wtp$from_level == changes$from_level[1] & local_wtp$to_level == changes$to_level[1] & local_wtp$interval == price_steps$interval[1]])` in the $15–$25 segment and `r money(local_wtp$wtp_local_usd[local_wtp$from_level == changes$from_level[1] & local_wtp$to_level == changes$to_level[1] & local_wtp$interval == price_steps$interval[2]])` in the $25–$35 segment. The `within_interval_width` flag identifies when the estimated price change exceeds the interval width; even when it does not, the result is a local approximation and depends on where the change begins.
+
+```{r local-wtp-figure, fig.cap="Local monetary equivalents vary with the reference price interval"}
+p_local <- local_wtp |>
+  ggplot(aes(x = interval, y = wtp_local_usd, fill = interval)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~group, scales = "free_y") +
+  labs(x = "Observed price interval", y = "Local WTP (USD per seat per game)") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+print(p_local)
+save_figure(p_local, "03_local_wtp_by_price_interval.png", 11, 8)
+```
+
+**Figure interpretation.** The large variation across price intervals reflects the shape of the supplied price part-worth function. These are **alternative valuation assumptions applied to the same attribute improvements**, not separate estimates from different respondent groups. The plot should therefore be read as a model-sensitivity comparison.
+
+## 4.3 Piecewise-linear compensating price changes
+
+Local-slope division can be misleading when an improvement is large enough to cross a price breakpoint. The project therefore constructs a continuous **piecewise-linear interpolation** through the four observed price utilities and solves the compensating price condition exactly within the observed domain:
+
+$$u_P(p_0+WTP)-u_P(p_0)=-\Delta U.$$
+
+Because the price-utility curve is strictly decreasing, a unique solution exists **if and only if** the target utility remains between the observed endpoint utilities. No extrapolation outside $15–$60 is performed. WTP may be unavailable at a high starting price even when the attribute improvement is valuable: the price ceiling simply prevents identification of the full compensation.
+
+```{r piecewise-wtp-functions}
+price_utility <- function(p) {
+  stats::approx(x = price$price_usd, y = price$utility,
+                xout = p, method = "linear", rule = 1, ties = "ordered")$y
+}
+compensating_wtp <- function(delta_u, reference_price) {
+  assert(length(delta_u) == 1L && is.finite(delta_u) && delta_u >= 0,
+         "A nonnegative utility improvement is required")
+  assert(reference_price >= min(price$price_usd) &&
+           reference_price <= max(price$price_usd), "Reference price is outside the observed range")
+  target_u <- price_utility(reference_price) - delta_u
+  if (target_u < min(price$utility) - 1e-10) return(NA_real_)
+  # Invert the strictly monotone interpolated price-utility curve.
+  target_price <- stats::approx(x = rev(price$utility), y = rev(price$price_usd),
+                                xout = target_u, method = "linear", rule = 1,
+                                ties = "ordered")$y
+  if (length(target_price) != 1L || is.na(target_price)) return(NA_real_)
+  max(0, target_price - reference_price)
+}
+reference_prices <- price$price_usd[1:3]  # $15, $25, $35; $60 leaves no upward room.
+piecewise_wtp <- tidyr::crossing(changes, reference_price = reference_prices) |>
+  rowwise() |>
+  mutate(wtp_piecewise_usd = compensating_wtp(delta_utility, reference_price),
+         target_price_usd = ifelse(is.na(wtp_piecewise_usd), NA_real_,
+                                  reference_price + wtp_piecewise_usd),
+         identifiable_in_observed_range = !is.na(wtp_piecewise_usd)) |>
+  ungroup()
+knitr::kable(piecewise_wtp |>
+               select(group, from_level, to_level, reference_price,
+                      delta_utility, wtp_piecewise_usd, target_price_usd,
+                      identifiable_in_observed_range),
+             digits = 3,
+             caption = "Compensating WTP using piecewise price utility within $15–$60")
+```
+
+**Results and interpretation.** The piecewise method follows the actual observed changes in the price utility estimates. An unavailable (`NA`) result means that the specified utility improvement cannot be fully offset by raising the ticket price **within the observed price range**; it does **not** mean zero WTP. Starting at $25, the three-to-six-game improvement has a piecewise monetary equivalent of `r money(piecewise_wtp$wtp_piecewise_usd[piecewise_wtp$from_level == changes$from_level[1] & piecewise_wtp$to_level == changes$to_level[1] & piecewise_wtp$reference_price == 25])`, incorporating the flatter $25–$35 segment and, when necessary, the steeper $35–$60 segment.
+
+```{r wtp-comparison-figure, fig.cap="Piecewise compensating WTP by starting ticket price"}
+p_piecewise <- piecewise_wtp |>
+  mutate(change_label = paste(from_level, "→", to_level)) |>
+  ggplot(aes(x = factor(reference_price), y = wtp_piecewise_usd,
+             group = change_label, color = change_label)) +
+  geom_point(size = 2, na.rm = TRUE) +
+  geom_line(linewidth = 0.7, na.rm = TRUE) +
+  facet_wrap(~group, scales = "free_y") +
+  labs(x = "Starting ticket price (USD)", y = "Piecewise WTP (USD per seat per game)",
+       color = "Attribute improvement") +
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "bottom")
+print(p_piecewise)
+save_figure(p_piecewise, "03_piecewise_wtp_reference_prices.png", 12, 9)
+```
+
+**Figure interpretation.** Starting price matters even when the attribute improvement is unchanged. The plotted estimates are restricted to cases where the compensating price lies in the observed domain; missing points should not be interpreted as unattractive features. The method is more internally consistent than extending a local slope beyond its segment, but the interpolation itself remains a modeling assumption rather than a directly observed continuous preference function.
+
+# 5. Promotional benefits: consumer value versus provider cost
+
+## 5.1 Incremental utility relative to no promotion
+
+A promotion should be evaluated against a meaningful alternative. The appropriate consumer-side comparison is **the same package without a promotional item**:
+
+$$\Delta U_m=u_{M,m}-u_{M,\mathrm{none}}.$$
+
+This is distinct from dividing the absolute promotional part-worth by cost, which is sensitive to utility normalization and does not isolate the benefit of providing the item. The project pairs each incremental utility with its reported direct cost, preserving the distinction between monetary equivalents and actual cash flows.
+
+```{r promotion-economics}
+promos <- partworth |> filter(attribute == "Promotional Item") |> arrange(level_id)
+none <- promos |> filter(level_id == 5L)
+assert(nrow(none) == 1L, "The fifth promotion level must be 'none'")
+assert(abs(none$cost_usd[[1]]) < 1e-9, "No-promotion direct cost is expected to be zero")
+promotion_values <- promos |>
+  mutate(delta_u_vs_none = utility - none$utility[[1]],
+         incremental_cost_usd = cost_usd - none$cost_usd[[1]],
+         wtp_full_range_usd = delta_u_vs_none / abs(full_range_slope),
+         value_minus_cost_full_range = wtp_full_range_usd - incremental_cost_usd,
+         cost_per_utility_gain = ifelse(delta_u_vs_none > 0,
+                                       incremental_cost_usd / delta_u_vs_none, NA_real_)) |>
+  select(level_id, product_level, utility, delta_u_vs_none, incremental_cost_usd,
+         wtp_full_range_usd, value_minus_cost_full_range, cost_per_utility_gain)
+knitr::kable(promotion_values, digits = 4,
+             caption = "Promotion utility gains, full-range monetary equivalents, and reported costs")
+```
+
+**Results and interpretation.** Relative to no promotion, hot dog and soda adds `r fmt(promotion_values$delta_u_vs_none[promotion_values$level_id == 2], 5)` utility units at a reported cost of `r money(promotion_values$incremental_cost_usd[promotion_values$level_id == 2])`. Using the full $15–$60 endpoint slope, its price-equivalent value is `r money(promotion_values$wtp_full_range_usd[promotion_values$level_id == 2])`. Apparel adds `r fmt(promotion_values$delta_u_vs_none[promotion_values$level_id == 3], 5)` utility units, with an endpoint-slope equivalent of `r money(promotion_values$wtp_full_range_usd[promotion_values$level_id == 3])` against a reported cost of `r money(promotion_values$incremental_cost_usd[promotion_values$level_id == 3])`.
+
+The endpoint conversion is useful as a **descriptive benchmark**, not a universal WTP estimate. In particular, `value_minus_cost_full_range` is a difference between a *modeled consumer valuation* and a *reported direct cost*. It is **not accounting profit**, and it is not automatically comparable across promotions if the benefit and cost apply at different delivery frequencies. Priority access to playoff tickets has zero reported direct cost, but may still entail capacity or opportunity costs.
+
+## 5.2 Promotion value under alternative price assumptions
+
+To test whether the promotion conclusion depends on a single price conversion, the project evaluates each benefit using all three local slopes, the full-range secant, and piecewise compensation at $15, $25, and $35. The result is a valuation sensitivity table, not an estimate of a consumer WTP distribution.
+
+```{r promotion-sensitivity}
+promo_changes <- changes |> filter(group == "Promotions")
+promo_local <- local_wtp |> filter(group == "Promotions") |>
+  transmute(to_level, valuation_method = paste0("Local slope ", interval),
+            wtp_usd = wtp_local_usd)
+promo_full <- promotion_values |> filter(level_id != 5L) |>
+  transmute(to_level = product_level, valuation_method = "Full-range endpoint slope",
+            wtp_usd = wtp_full_range_usd)
+promo_piecewise <- piecewise_wtp |> filter(group == "Promotions") |>
+  transmute(to_level, valuation_method = paste0("Piecewise from $", reference_price),
+            wtp_usd = wtp_piecewise_usd)
+promotion_sensitivity <- bind_rows(promo_local, promo_full, promo_piecewise) |>
+  left_join(promotion_values |> select(product_level, incremental_cost_usd),
+            by = c("to_level" = "product_level")) |>
+  mutate(value_less_reported_cost = wtp_usd - incremental_cost_usd,
+         identifiable = !is.na(wtp_usd))
+knitr::kable(promotion_sensitivity, digits = 3,
+             caption = "Promotion monetary equivalents under alternative price specifications")
+```
+
+**Interpretation.** A positive difference between modeled value and reported cost is suggestive of a potentially attractive benefit under the stated valuation convention. It is **not sufficient** to conclude that a giveaway increases revenue or profit: the analysis does not identify the change in purchase probability, the number of purchases, or the cost frequency. Some piecewise estimates may be unavailable because the required compensating price exceeds $60; these are boundary limitations, not negative valuations.
+
+```{r promotion-figure, fig.cap="Promotional valuation benchmarks versus reported direct costs"}
+p_promo <- promotion_sensitivity |>
+  filter(identifiable) |>
+  ggplot(aes(x = valuation_method, y = wtp_usd)) +
+  geom_col(fill = "#287C92", alpha = 0.82) +
+  geom_hline(aes(yintercept = incremental_cost_usd), linetype = "dashed",
+             color = "#B64A36", linewidth = 0.7) +
+  facet_wrap(~to_level, scales = "free_y") +
+  labs(x = NULL, y = "Price-equivalent value (USD per seat per game)",
+       caption = "Dashed line: reported direct promotion cost; units and delivery frequency must be checked before financial comparison.") +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1))
+print(p_promo)
+save_figure(p_promo, "03_promotion_wtp_cost_sensitivity.png", 13, 9)
+```
+
+**Figure interpretation.** The same promotional benefit can appear more or less attractive depending on the price-utility assumption. The dashed cost reference is deliberately shown alongside—not subtracted from—a demand or profit forecast. The strongest conclusion supported by these inputs is that **hot dog and soda generates the largest incremental promotional utility**, while the economic ranking of giveaways depends on the price valuation rule, delivery frequency, and commercial response.
+
+# 6. Attribute trade-offs and pricing decisions
+
+## 6.1 Compare attribute improvements with specified price reductions
+
+For a price reduction from $p_{\mathrm{high}}$ to $p_{\mathrm{low}}$, the consumer's utility gain is
+
+$$\Delta U_{\mathrm{price}}=u_P(p_{\mathrm{low}})-u_P(p_{\mathrm{high}}).$$
+
+The project compares that gain with each positive attribute improvement. This comparison establishes **which change raises modeled consumer utility more**, not which is economically preferable for the Trail Blazers. A price cut reduces revenue per ticket, while an attribute improvement may carry a direct cost.
+
+```{r attribute-price-tradeoffs}
+price_cuts <- data.frame(from_price = c(25, 35, 60, 60),
+                         to_price = c(15, 25, 35, 15)) |>
+  mutate(price_cut_usd = from_price - to_price,
+         utility_gain = price_utility(to_price) - price_utility(from_price),
+         price_cut_label = paste0("$", from_price, " → $", to_price))
+tradeoffs <- tidyr::crossing(changes, price_cuts) |>
+  mutate(utility_advantage_of_attribute = delta_utility - utility_gain,
+         larger_consumer_utility_gain = case_when(
+           abs(utility_advantage_of_attribute) < 1e-10 ~ "Equal",
+           utility_advantage_of_attribute > 0 ~ "Attribute improvement",
+           TRUE ~ "Price reduction"))
+knitr::kable(tradeoffs |>
+               select(group, from_level, to_level, price_cut_label,
+                      delta_utility, utility_gain, utility_advantage_of_attribute,
+                      larger_consumer_utility_gain),
+             digits = 5, caption = "Utility comparison of attribute changes and price reductions")
+```
+
+**Results and interpretation.** A price reduction from $25 to $15 increases utility by `r fmt(price_cuts$utility_gain[1], 5)`, compared with `r fmt(changes$delta_utility[1], 5)` for increasing the package from three to six games. Thus the specified price cut generates the larger **consumer utility gain**, but the model alone cannot establish that it is the better financial decision. This distinction prevents utility rankings from being mistaken for profit rankings.
+
+## 6.2 Existing seat-price configurations
+
+The case also describes current seat-price pairings. Their combined utility isolates two central attributes—ticket location and price—while holding game count and promotion unspecified. The four combinations are:
+
+- 300-level behind baskets at $15;
+- 300-level corners at $25;
+- 300-level midcourt at $35;
+- 200-level midcourt at $60.
+
+These combinations are used as **case-defined management scenarios**, not as observed purchases or estimates of actual demand.
+
+```{r seat-price-comparison}
+seat_price_pairs <- data.frame(seat_id = 1:4, price_usd = c(15, 25, 35, 60))
+seat_price_pairs$seat <- vapply(seat_price_pairs$seat_id,
+                               function(id) lookup_label("Ticket Location", id), character(1))
+seat_price_pairs$seat_utility <- vapply(seat_price_pairs$seat_id,
+                                       function(id) lookup_u("Ticket Location", id), numeric(1))
+seat_price_pairs$price_utility <- price_utility(seat_price_pairs$price_usd)
+seat_price_pairs$combined_utility <- seat_price_pairs$seat_utility + seat_price_pairs$price_utility
+seat_price_pairs <- seat_price_pairs |> arrange(desc(combined_utility))
+knitr::kable(seat_price_pairs[, c("seat", "price_usd", "seat_utility",
+                                "price_utility", "combined_utility")],
+             digits = 5, caption = "Case seat-price combinations and combined systematic utility")
+```
+
+**Results and interpretation.** Among these four configurations, `r seat_price_pairs$seat[1]` at `r money(seat_price_pairs$price_usd[1])` yields the highest combined seat-and-price utility (`r fmt(seat_price_pairs$combined_utility[1], 5)`). The comparison identifies an opportunity to examine pricing headroom, not an automatic recommendation to increase price in a weak attendance environment.
+
+## 6.3 Illustrative price headroom for 300-level midcourt
+
+Consider the $35 300-level midcourt configuration. The project calculates the additional price that would reduce its combined utility to that of the $60 200-level midcourt alternative. It holds seating fixed, assumes piecewise-linear price utility, and does not extrapolate beyond the observed price levels.
+
+```{r seat-price-headroom}
+mid300 <- seat_price_pairs |> filter(seat_id == 3L)
+mid200 <- seat_price_pairs |> filter(seat_id == 4L)
+assert(nrow(mid300) == 1L && nrow(mid200) == 1L, "Missing reference seat-price scenarios")
+headroom_delta_u <- mid300$combined_utility - mid200$combined_utility
+assert(headroom_delta_u >= 0, "Reference configuration does not have positive utility headroom")
+headroom_usd <- compensating_wtp(headroom_delta_u, mid300$price_usd)
+headroom_summary <- data.frame(
+  baseline_price_usd = mid300$price_usd,
+  baseline_combined_utility = mid300$combined_utility,
+  comparator_price_usd = mid200$price_usd,
+  comparator_combined_utility = mid200$combined_utility,
+  utility_gap = headroom_delta_u,
+  estimated_price_headroom_usd = headroom_usd,
+  indifference_price_usd = mid300$price_usd + headroom_usd)
+knitr::kable(headroom_summary, digits = 4,
+             caption = "Illustrative price headroom for 300-level midcourt seats")
+```
+
+**Interpretation.** The combined utility gap is `r fmt(headroom_delta_u, 5)` units. Using the observed $35–$60 price segment, the illustrative price headroom is `r money(headroom_usd)` per seat per game, implying an indifference price of approximately `r money(mid300$price_usd + headroom_usd)`. This is a **model-implied indifference calculation**, not a demand forecast, a tested optimal price, or a recommendation to implement the full increase. Actual pricing would also require consideration of attendance, customer retention, inventory, competitive alternatives, and cannibalization.
+
+# 7. Model checks and research interpretation
+
+## 7.1 Numerical validation
+
+The analysis performs checks on the monotonic price function, endpoint interpolation, WTP inversion, and promotion increments. These checks assess the internal consistency of the calculations. They do not substitute for external validation with respondent-level choices.
+
+```{r numerical-checks}
+probe <- seq(min(price$price_usd), max(price$price_usd), by = 0.25)
+valid_wtp <- piecewise_wtp |> filter(identifiable_in_observed_range)
+inversion_error <- if (nrow(valid_wtp)) {
+  max(abs(price_utility(valid_wtp$target_price_usd) -
+          (price_utility(valid_wtp$reference_price) - valid_wtp$delta_utility)))
+} else NA_real_
+validation <- data.frame(
+  check = c("Price utility matches all four source levels",
+            "Interpolated price utility is monotonically decreasing",
+            "Local price slopes are strictly negative",
+            "Piecewise WTP satisfies compensating utility equation",
+            "All promotion utility increments are nonnegative",
+            "All reported promotional costs are nonnegative",
+            "Seat-price reference comparisons remain feasible"),
+  passed = c(max(abs(price_utility(price$price_usd) - price$utility)) < 1e-10,
+             all(diff(price_utility(probe)) < 1e-10),
+             all(price_steps$slope_utility_per_usd < 0),
+             is.finite(inversion_error) && inversion_error < 1e-8,
+             all(promotion_values$delta_u_vs_none >= -1e-10),
+             all(promotion_values$incremental_cost_usd >= -1e-10),
+             all(seat_price_pairs$price_usd >= c(0, 0, 25, 60)[seat_price_pairs$seat_id])))
+assert(all(validation$passed), "Module 3 numerical validation failed")
+knitr::kable(validation, caption = "Module 3 numerical validation checks")
+```
+
+**Validation result.** `r sum(validation$passed)` of `r nrow(validation)` checks passed. The maximum absolute inversion error among identifiable piecewise WTP comparisons is `r format(inversion_error, scientific = TRUE)`. These checks verify arithmetic and model implementation, not the predictive accuracy of the underlying conjoint survey.
+
+## 7.2 Substantive findings
+
+The analysis yields four connected findings:
+
+1. **Price sensitivity is nonlinear across the supplied levels.** The observed price-utility slope changes substantially across the $15–$25, $25–$35, and $35–$60 intervals. Monetary valuations therefore depend on the conversion convention and starting price.
+2. **WTP should be interpreted relative to a specified baseline.** Local-slope WTP is useful for comparison but may exceed the interval that defines its slope. Piecewise compensation is internally consistent within the observed price domain, yet some improvements cannot be fully valued without extrapolation.
+3. **Promotions have measurable incremental value.** Hot dog and soda has the largest utility improvement relative to no promotion. Its modeled monetary equivalent can exceed its reported direct cost under several conversion conventions, but this does not by itself establish profitability.
+4. **Consumer utility and management performance are distinct.** Price cuts, seat upgrades, and promotions can be ranked by utility gain; selecting among them requires additional financial and demand assumptions.
+
+## 7.3 Limitations and scope of inference
+
+**Data granularity.** The project uses 16 supplied part-worth estimates, not the 204 respondents' individual choice records. It cannot estimate individual-level WTP heterogeneity, statistical standard errors, or out-of-sample purchase accuracy from these inputs.
+
+**Price specification.** Price is represented by four categorical part-worths. The local-slope, endpoint-slope, and piecewise-linear approaches are alternative valuation conventions; the data do not establish a uniquely correct continuous price-response function.
+
+**Price bounds and feasibility.** WTP above $60 cannot be identified by the piecewise method without extrapolation. A monetary equivalent for a hypothetical attribute improvement is not necessarily a feasible price for a particular seat category or an observed market offer.
+
+**Units and costs.** Price is per seat per game, while promotional costs require a documented delivery frequency before full package contribution can be calculated. A comparison between price-equivalent value and reported promotional cost is illustrative until these accounting units are aligned.
+
+**Decision relevance.** The analysis does not model the outside option, total demand, seat capacity, substitution across packages, or competitive responses. Therefore, no estimate here is a calibrated profit-maximizing price or an empirically validated revenue forecast.
+
+# 8. Export results for the remaining modules
+
+The project saves all monetary valuations and diagnostic tables using a `03_` prefix. These outputs support the package design and cost analysis in Module 4 and the sensitivity analysis in Module 5. The input workbook and the processed utility table remain unchanged.
+
+```{r export-results}
+save_table(price_steps, "03_price_utility_intervals.csv")
+save_table(price_fit_summary, "03_linear_price_diagnostics.csv")
+save_table(changes, "03_attribute_utility_improvements.csv")
+save_table(local_wtp, "03_local_slope_wtp.csv")
+save_table(piecewise_wtp, "03_piecewise_wtp.csv")
+save_table(promotion_values, "03_promotion_incremental_values.csv")
+save_table(promotion_sensitivity, "03_promotion_valuation_sensitivity.csv")
+save_table(price_cuts, "03_price_reductions.csv")
+save_table(tradeoffs, "03_attribute_price_tradeoffs.csv")
+save_table(seat_price_pairs, "03_seat_price_comparisons.csv")
+save_table(headroom_summary, "03_seat_price_headroom.csv")
+save_table(validation, "03_numerical_validation.csv")
+export_manifest <- data.frame(
+  category = c(rep("Table", 12), rep("Figure", 4)),
+  file = c("03_price_utility_intervals.csv", "03_linear_price_diagnostics.csv",
+           "03_attribute_utility_improvements.csv", "03_local_slope_wtp.csv",
+           "03_piecewise_wtp.csv", "03_promotion_incremental_values.csv",
+           "03_promotion_valuation_sensitivity.csv", "03_price_reductions.csv",
+           "03_attribute_price_tradeoffs.csv", "03_seat_price_comparisons.csv",
+           "03_seat_price_headroom.csv", "03_numerical_validation.csv",
+           "03_price_partworth_nonlinearity.png", "03_local_wtp_by_price_interval.png",
+           "03_piecewise_wtp_reference_prices.png", "03_promotion_wtp_cost_sensitivity.png"))
+knitr::kable(export_manifest, caption = "Module 3 output manifest")
+```
+
+# 9. Conclusion and transition to package design
+
+Conjoint-based valuation reveals that a feature's economic interpretation depends on **both its incremental utility and the way price enters the utility model**. The supplied price estimates are not linear across observed levels, so a single WTP figure can conceal important sensitivity. By reporting local approximations, bounded piecewise compensation, and explicit promotional cost benchmarks, the project provides a more transparent basis for evaluating ticket-package features.
+
+The central managerial insight is that **consumer value is necessary but not sufficient for a financial recommendation**. Module 4 — Ticket Package Design & Constrained Decision Analysis — will evaluate the feasible combinations of games, price, seating, and promotions and distinguish systematic utility from clearly defined economic contribution measures.
+
+# References and data provenance
+
+- Wilcox, Ronald T. *Portland Trail Blazers*. Darden Business Publishing, case UV2971 (revised April 2017). Business context, survey description, ticket attributes, pricing constraints, and reported cost schedule.
+- Xiang, Keman. `Portland Trail Blazers_Keman_Xiang.xlsx`. Project input workbook, including `Table 1. Utility score data.`, `Product Analysis`, `Willingness to pay`, and `Attribute Tradeoff`.
+- Xiang, Keman. *Assignment 3*. Project discussion of attribute importance, ticket-price comparisons, and promotional valuation.
+- Project Module 1: `01_data_input_validation_eda.Rmd`; Module 2: `02_conjoint_utility_importance.Rmd`.

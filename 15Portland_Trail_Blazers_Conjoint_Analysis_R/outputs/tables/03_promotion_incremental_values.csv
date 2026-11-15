@@ -1,0 +1,6 @@
+"level_id","product_level","utility","delta_u_vs_none","incremental_cost_usd","wtp_full_range_usd","value_minus_cost_full_range","cost_per_utility_gain"
+1,"Priority for home playoff tickets",0.12511,0.44297,0,12.0152438473084,12.0152438473084,0
+2,"Hot dog and soda with each ticket",0.17428,0.49214,3.25,13.3489448653731,10.0989448653731,6.60381192343642
+3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,0.31944,12,8.66458111064899,-3.33541888935101,37.5657400450789
+4,"$20 gift certificate for popular local restaurant",0.01689,0.33475,10,9.07985389052639,-0.92014610947361,29.8730395817774
+5,"No promotional item",-0.31786,0,0,0,0,

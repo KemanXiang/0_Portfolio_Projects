@@ -1,0 +1,17 @@
+"attribute","preference_rank","product_level","utility","gain_vs_least_preferred"
+"Number of Games",1,"6",0.24383,0.52023
+"Number of Games",2,"3",0.03257,0.30897
+"Number of Games",3,"10",-0.2764,0
+"Promotional Item",1,"Hot dog and soda with each ticket",0.17428,0.49214
+"Promotional Item",2,"Priority for home playoff tickets",0.12511,0.44297
+"Promotional Item",3,"$20 gift certificate for popular local restaurant",0.01689,0.33475
+"Promotional Item",4,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,0.31944
+"Promotional Item",5,"No promotional item",-0.31786,0
+"Ticket Location",1,"200 level, midcourt",1.01148,1.74317
+"Ticket Location",2,"300 level, midcourt",0.15736,0.88905
+"Ticket Location",3,"300 level, on the corners",-0.43716,0.29453
+"Ticket Location",4,"300 level, behind the baskets",-0.73169,0
+"Ticket Price",1,"15",0.65646,1.65903
+"Ticket Price",2,"25",0.22011,1.22268
+"Ticket Price",3,"35",0.126,1.12857
+"Ticket Price",4,"60",-1.00257,0

@@ -1,0 +1,579 @@
+---
+title: "Portland Trail Blazers: Conjoint Analysis for Ticket Package Design, Pricing, and Economic Decision-Making"
+subtitle: "Module 6 | Managerial Implications, Decision Framework & Research Conclusions"
+author: "Keman Xiang"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: readable
+    highlight: tango
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.width = 9, fig.height = 5.5, dpi = 140)
+required <- c("dplyr", "tidyr", "ggplot2", "knitr")
+missing <- required[!vapply(required, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing)) stop("Install required packages: ", paste(missing, collapse = ", "))
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+roots <- c(".", "..")
+roots <- roots[file.exists(file.path(roots, "data", "processed", "partworth_levels.csv"))]
+if (!length(roots)) stop("Run Module 1 first: partworth_levels.csv is unavailable")
+project_root <- normalizePath(roots[[1]], mustWork = TRUE)
+workbook_path <- file.path(project_root, "data", "Portland Trail Blazers_Keman_Xiang.xlsx")
+if (!file.exists(workbook_path)) stop("The project source workbook is missing: ", workbook_path)
+tables_dir <- file.path(project_root, "outputs", "tables")
+figures_dir <- file.path(project_root, "outputs", "figures")
+dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(figures_dir, recursive = TRUE, showWarnings = FALSE)
+assert <- function(ok, msg) if (!isTRUE(ok)) stop(msg, call. = FALSE)
+read_output <- function(filename) {
+  path <- file.path(tables_dir, filename)
+  if (!file.exists(path)) stop("Required upstream output is missing: ", filename,
+                               ". Knit the corresponding earlier module first.")
+  utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+}
+save_table <- function(x, filename) utils::write.csv(x, file.path(tables_dir, filename), row.names = FALSE, na = "")
+save_figure <- function(p, filename, width = 9, height = 5.5) {
+  ggplot2::ggsave(file.path(figures_dir, filename), plot = p, width = width, height = height, dpi = 180)
+}
+fmt <- function(x, digits = 4) formatC(x, digits = digits, format = "f")
+money <- function(x) paste0("$", fmt(x, 2))
+```
+
+# 1. Executive research summary
+
+## 1.1 Business problem and research purpose
+
+The Portland Trail Blazers needed to develop multigame ticket packages that could appeal to former purchasers in a setting of declining attendance. The decision involves four linked product dimensions: **number of games, price per seat per game, seat location, and promotional benefit**. Package offers must also comply with seat-specific minimum prices and account for the cost of delivering seats and promotions.
+
+The case describes **960 contacted former multigame or season-ticket purchasers**, **204 valid survey respondents**, and **20 conjoint tasks per respondent**. The analytical workbook supplies 16 aggregate part-worth estimates across four attributes, together with reported seat allocations, promotional costs, and pricing constraints. The project evaluates those estimates as the empirical preference input; it develops a decision model for designing and comparing ticket offers.
+
+The central research question is:
+
+> **Which feasible ticket-package designs combine strong stated consumer appeal with defensible unit economics, and how should management prioritize offers when preferences and cost assumptions are uncertain?**
+
+## 1.2 Research structure and evidence chain
+
+The project progresses from source-data validation to consumer-preference measurement, monetary trade-offs, constrained package design, sensitivity analysis, and an actionable management decision. Each stage preserves the distinction between observed source inputs, derived model outputs, and explicitly assumed scenarios.
+
+| Research stage | Main question | Analytical contribution |
+|:--|:--|:--|
+| 01. Data input, validation and EDA | What evidence is available and internally consistent? | Validated 16-level part-worth and cost input table; documented design and constraints |
+| 02. Conjoint utility and importance | What features drive stated preference? | Level rankings, range-based attribute importance and additive package utility |
+| 03. WTP and attribute trade-offs | What is the utility-equivalent value of feature improvements? | Nonlinear price slopes, reference-dependent WTP and promotion cost–value comparisons |
+| 04. Package design optimization | Which offers satisfy policy and lead on each objective? | 240-profile design space, 180 feasible offers, contribution scenarios and Pareto comparisons |
+| 05. Model validation and sensitivity | How sensitive are the conclusions to inputs and assumptions? | Independent arithmetic audits, hypothetical utility shocks, 18 cost scenarios and frontier persistence |
+| 06. Decision synthesis | Which offers should be considered, tested and monitored? | Evidence-weighted recommendations, operational decision rules and a research agenda |
+
+# 2. Data provenance, analytical definitions and final input audit
+
+## 2.1 Load verified project outputs
+
+The synthesis reads the validated attribute-level dataset from Module 1 and the analytical tables exported by Modules 2–5. The source workbook remains the primary numerical reference. The output files are deterministic transformations or explicitly identified scenario calculations based on that reference. 
+
+```{r load-analytical-evidence}
+partworth <- utils::read.csv(file.path(project_root, "data", "processed", "partworth_levels.csv"),
+                             stringsAsFactors = FALSE, check.names = FALSE)
+importance <- read_output("02_attribute_importance.csv")
+price_steps <- read_output("03_price_utility_intervals.csv")
+promotion_values <- read_output("03_promotion_incremental_values.csv")
+packages <- read_output("04_feasible_package_economics.csv")
+leaders05 <- read_output("05_baseline_objective_leaders.csv")
+stability <- read_output("05_utility_ranking_stability_summary.csv")
+cost_scenarios <- read_output("05_cost_scenario_leaders.csv")
+frontier_persistence <- read_output("05_pareto_persistence.csv")
+validation_checks <- read_output("05_internal_validation_checks.csv")
+assert(all(c("attribute", "level_id", "product_level", "utility", "cost_usd") %in% names(partworth)),
+       "Validated part-worth schema is incomplete")
+assert(all(c("attribute", "importance_pct") %in% names(importance)),
+       "Module 2 importance schema is incomplete")
+assert(all(c("level_id", "delta_u_vs_none", "incremental_cost_usd", "wtp_full_range_usd") %in% names(promotion_values)),
+       "Module 3 promotion valuation schema is incomplete")
+required_pkg <- c("package_id", "games_id", "price_id", "seat_id", "promo_id", "games_n",
+                  "price_usd", "seat_cost_usd", "promo_cost_usd", "utility",
+                  "revenue_per_package", "contribution_A", "contribution_B")
+assert(all(required_pkg %in% names(packages)), "Module 4 package economics schema is incomplete")
+assert(all(c("objective", "package_id") %in% names(leaders05)), "Module 5 leader schema is incomplete")
+assert(all(c("scenario_id", "leader_package", "per_game_leader") %in% names(cost_scenarios)),
+       "Module 5 economic scenario schema is incomplete")
+assert(all(c("package_id", "frontier_scenarios", "frontier_share") %in% names(frontier_persistence)),
+       "Module 5 frontier schema is incomplete")
+assert(nrow(partworth) == 16L && nrow(packages) == 180L, "Unexpected source level or feasible package count")
+assert(nrow(cost_scenarios) == 18L, "Expected 18 cost scenarios")
+assert(!anyDuplicated(partworth[c("attribute", "level_id")]), "Duplicate source attribute levels")
+assert(!anyDuplicated(packages$package_id), "Duplicate feasible package identifiers")
+assert(all(is.finite(as.numeric(partworth$utility))), "Invalid source utility")
+assert(abs(sum(as.numeric(importance$importance_pct)) - 100) < 0.05,
+       "Attribute importance does not sum to 100 percent")
+assert(all(packages$price_usd[packages$seat_id == 4] >= 60) &&
+         all(packages$price_usd[packages$seat_id == 3] >= 25),
+       "One or more packages violate the seat-price policy")
+input_inventory <- data.frame(
+  evidence = c("Original attribute levels", "Conjoint attributes", "Theoretical profiles",
+               "Feasible package profiles", "Economic sensitivity scenarios"),
+  count = c(nrow(partworth), length(unique(partworth$attribute)),
+            prod(as.integer(table(partworth$attribute))), nrow(packages), nrow(cost_scenarios)))
+assert(input_inventory$count[3] == 240L, "The source attribute design must generate 240 profiles")
+knitr::kable(input_inventory, caption = "Verified evidence inventory")
+```
+
+**Results and interpretation.** The source design contains `r nrow(partworth)` attribute levels and generates `r input_inventory$count[3]` possible packages; `r nrow(packages)` satisfy the two seat-price restrictions. The `r nrow(cost_scenarios)` economic scenarios are sensitivity assumptions, not additional survey observations. This separation is essential when interpreting model-based recommendations.
+
+## 2.2 Define utility, monetary equivalence and contribution
+
+The additive conjoint score for package $j$ is the sum of its four part-worths:
+
+$$U_j=u_{\mathrm{games},j}+u_{\mathrm{price},j}+u_{\mathrm{seat},j}+u_{\mathrm{promotion},j}.$$
+
+The range-based importance of attribute $a$ is $100R_a/\sum_b R_b$, where $R_a$ is the difference between its highest and lowest part-worth. A utility improvement can be expressed as a **reference-dependent price equivalent** by dividing it by the magnitude of a selected price–utility slope. This price equivalent summarizes the estimated preference model; it is not a recorded payment.
+
+For $G_j$ games, price $P_j$ per game, seat allocation $S_j$ per game, and promotional cost $M_j$, the project compares two **conditional accounting-contribution** conventions:
+
+$$C_j^{(A)}=G_j(P_j-S_j)-M_j\quad\text{(promotion once per package)},$$
+$$C_j^{(B)}=G_j(P_j-S_j-M_j)\quad\text{(promotion once per game)}.$$
+
+Both quantities are modeled contribution **per package sold**, before other operating costs and without an estimated number of sales. The case's seat-cost figures are treated as reported allocations; the project does not assume that all allocations represent incremental cash expenditure.
+
+# 3. Consumer preference: what the conjoint model reveals
+
+## 3.1 Rank the four package attributes
+
+The code ranks the attributes using the utility ranges calculated in Module 2. The figure reports their share of the total observed range and is therefore specific to the levels included in the survey design.
+
+```{r attribute-importance-summary}
+importance <- importance |>
+  mutate(importance_pct = as.numeric(importance_pct)) |>
+  arrange(desc(importance_pct))
+knitr::kable(importance |> select(attribute, importance_pct), digits = 2,
+             caption = "Relative importance derived from the workbook part-worths")
+p_importance <- ggplot(importance, aes(x = reorder(attribute, importance_pct), y = importance_pct)) +
+  geom_col(fill = "#315F7D", width = 0.65) +
+  geom_text(aes(label = sprintf("%.2f%%", importance_pct)), hjust = -0.12, size = 3.6) +
+  coord_flip() +
+  scale_y_continuous(limits = c(0, max(importance$importance_pct) * 1.22),
+                     expand = expansion(mult = c(0, 0))) +
+  labs(x = NULL, y = "Share of total part-worth range (%)",
+       title = "Seat location and price dominate the modeled preference range") +
+  theme_minimal(base_size = 11)
+print(p_importance)
+```
+
+**Results and interpretation.** Seat location contributes `r fmt(importance$importance_pct[importance$attribute == 'Ticket Location'], 2)`% of the total part-worth range and ticket price contributes `r fmt(importance$importance_pct[importance$attribute == 'Ticket Price'], 2)`%. Together, these two dimensions explain `r fmt(sum(importance$importance_pct[importance$attribute %in% c('Ticket Location', 'Ticket Price')]), 2)`% of the modeled range. Number of games and promotional benefits remain relevant, particularly when their utility gains can be delivered at low cost.
+
+**Managerial implication.** Begin package differentiation with seat and price combinations. Use game counts and promotions to refine the value proposition, rather than assuming that a promotional giveaway can compensate for every seat or price disadvantage.
+
+## 3.2 Identify preferred levels and actionable feature changes
+
+The code identifies the most and least preferred level **within each attribute** and calculates their difference. Within-attribute differences have a clear interpretation because the same utility normalization applies to both compared levels.
+
+```{r preferred-levels}
+partworth <- partworth |>
+  mutate(level_id = as.integer(level_id), utility = as.numeric(utility),
+         cost_usd = as.numeric(cost_usd))
+level_extremes <- partworth |>
+  group_by(attribute) |>
+  summarise(best_level = product_level[which.max(utility)],
+            best_utility = max(utility),
+            worst_level = product_level[which.min(utility)],
+            worst_utility = min(utility),
+            utility_spread = max(utility) - min(utility), .groups = "drop") |>
+  arrange(desc(utility_spread))
+knitr::kable(level_extremes, digits = 5,
+             caption = "Strongest and weakest preference levels within each attribute")
+```
+
+**Results and interpretation.** The preferred seat is `r level_extremes$best_level[level_extremes$attribute == 'Ticket Location']`, while the preferred package length is `r level_extremes$best_level[level_extremes$attribute == 'Number of Games']`. These findings favor **six-game offers** and targeted seat improvements as candidates for product development. They describe the aggregate model and should be evaluated alongside price feasibility and unit economics.
+
+# 4. Price sensitivity, promotions and value-based design
+
+## 4.1 Explain nonlinear price response
+
+The source workbook reports separate part-worths for four ticket prices. Rather than imposing one universal price coefficient, the project measures the utility gain from each adjacent price reduction. The comparison demonstrates why a monetary equivalent depends on the selected reference interval.
+
+```{r price-response-summary}
+prices <- partworth |>
+  filter(attribute == "Ticket Price") |>
+  mutate(price_usd = as.numeric(gsub("[^0-9.]", "", product_level))) |>
+  arrange(price_usd)
+assert(nrow(prices) == 4L && all(is.finite(prices$price_usd)),
+       "Four numeric ticket prices are required")
+price_differences <- data.frame(
+  higher_price = prices$price_usd[-1],
+  lower_price = prices$price_usd[-nrow(prices)],
+  utility_gain_from_reduction = prices$utility[-nrow(prices)] - prices$utility[-1],
+  price_reduction_usd = diff(prices$price_usd)) |>
+  mutate(utility_gain_per_dollar = utility_gain_from_reduction / price_reduction_usd)
+assert(all(price_differences$utility_gain_from_reduction > 0),
+       "Source price utilities must decrease with price")
+knitr::kable(price_differences, digits = 5,
+             caption = "Utility gained from adjacent price reductions")
+p_price <- ggplot(prices, aes(price_usd, utility)) +
+  geom_line(color = "#315F7D", linewidth = 0.9) +
+  geom_point(color = "#315F7D", size = 3) +
+  scale_x_continuous(breaks = prices$price_usd) +
+  labs(x = "Ticket price per seat per game (USD)", y = "Estimated price part-worth",
+       title = "Price sensitivity varies across the studied price levels") +
+  theme_minimal(base_size = 11)
+print(p_price)
+```
+
+**Results and interpretation.** A price cut from $25 to $15 improves utility by `r fmt(price_differences$utility_gain_from_reduction[price_differences$higher_price == 25], 5)`, compared with `r fmt(price_differences$utility_gain_from_reduction[price_differences$higher_price == 35], 5)` for a cut from $35 to $25. The difference shows that equal-sized discounts can produce different modeled preference gains. Management should therefore evaluate **specific price points and feature combinations**, rather than relying on a constant price-response assumption.
+
+## 4.2 Compare promotional value with reported fulfillment cost
+
+The code joins the promotional utilities and costs already calculated in Module 3. Each promotion is compared with the no-promotion alternative, holding the other package attributes fixed. The endpoint-slope monetary equivalent is shown as a reference-dependent consumer valuation, alongside the workbook's reported cost.
+
+```{r promotion-decision-summary}
+promo_summary <- promotion_values |>
+  mutate(across(c(delta_u_vs_none, incremental_cost_usd, wtp_full_range_usd), as.numeric)) |>
+  select(level_id, product_level, delta_u_vs_none, incremental_cost_usd, wtp_full_range_usd) |>
+  arrange(desc(delta_u_vs_none))
+knitr::kable(promo_summary, digits = 3,
+             caption = "Incremental promotion utility, modeled monetary equivalent and reported cost")
+assert(any(promo_summary$level_id == 2L), "Hot dog and soda promotion is missing")
+hotdog <- promo_summary |> filter(level_id == 2L) |> slice(1)
+```
+
+**Results and interpretation.** Hot dog and soda adds `r fmt(hotdog$delta_u_vs_none, 5)` utility relative to no promotion, at a reported direct cost of `r money(hotdog$incremental_cost_usd)`. Its full-range price-equivalent value is approximately `r money(hotdog$wtp_full_range_usd)`. This comparison supports testing a low-cost, high-perceived-value benefit, subject to fulfillment frequency, capacity and operational feasibility. The difference between modeled valuation and reported cost is **not a profit estimate**.
+
+**Managerial implication.** Prioritize promotions by **incremental preference benefit, delivery cost and operational feasibility**. A zero-reported-cost benefit may still carry capacity or opportunity costs; paid merchandise may be less attractive when its direct cost is high relative to the utility improvement.
+
+# 5. Feasible product design and competing commercial objectives
+
+## 5.1 Translate the source preference model into permitted offers
+
+The case requires **200-level midcourt tickets to be priced at $60 or above** and **300-level midcourt tickets at $25 or above**. The full factorial contains 240 profiles; these restrictions exclude 60, leaving 180 feasible packages. The code rechecks these policies before selecting any management candidate.
+
+```{r feasible-design-audit}
+feasibility_summary <- data.frame(
+  category = c("Theoretical profiles", "Policy-compliant profiles", "Excluded profiles"),
+  count = c(240L, nrow(packages), 240L - nrow(packages)))
+assert(all(packages$price_usd[packages$seat_id == 4L] >= 60),
+       "Premium midcourt seat minimum price violation")
+assert(all(packages$price_usd[packages$seat_id == 3L] >= 25),
+       "300-level midcourt minimum price violation")
+knitr::kable(feasibility_summary, caption = "Permitted package design space")
+```
+
+**Interpretation.** The best unconstrained combination is not necessarily available for sale. Screening against the actual seat-price policy is therefore a prerequisite for every recommendation.
+
+## 5.2 Compare the preference leader with contribution leaders
+
+The project reports separate leaders for consumer utility, modeled contribution per package, and modeled contribution per game. The latter distinction matters because a longer package can create greater contribution per sale without being the most preferred offer. This section obtains the leaders from Module 5 and joins them to the complete Module 4 package attributes.
+
+```{r objective-leader-comparison}
+objective_labels <- c(
+  utility = "Consumer utility",
+  contribution_A = "Contribution per package: promotion once",
+  contribution_B = "Contribution per package: promotion per game",
+  contribution_A_per_game = "Contribution per game: promotion once",
+  contribution_B_per_game = "Contribution per game: promotion per game")
+objective_summary <- leaders05 |>
+  filter(objective %in% names(objective_labels)) |>
+  select(objective, package_id) |>
+  left_join(packages |> select(all_of(required_pkg)), by = "package_id") |>
+  mutate(decision_objective = unname(objective_labels[objective])) |>
+  select(decision_objective, package_id, games_n, price_usd, seat_id, promo_id,
+         utility, contribution_A, contribution_B)
+assert(nrow(objective_summary) == 5L && !anyNA(objective_summary$utility),
+       "Five validated objective leaders are required")
+knitr::kable(objective_summary, digits = 3,
+             caption = "Different objectives identify potentially different offers")
+preference_leader <- objective_summary |>
+  filter(decision_objective == "Consumer utility") |> slice(1)
+assert(nrow(preference_leader) == 1L, "A unique preference-leader row is required")
+```
+
+**Results and interpretation.** The top utility profile is `r preference_leader$package_id`, consisting of `r preference_leader$games_n` games at `r money(preference_leader$price_usd)` per game, seat level `r preference_leader$seat_id`, and promotion level `r preference_leader$promo_id`. Its additive utility is `r fmt(preference_leader$utility, 5)`. The comparison makes clear why a consumer-preference leader is a **candidate for testing**, while contribution-oriented alternatives may be more appropriate when management's objective is unit economics.
+
+## 5.3 Build a balanced management shortlist
+
+The code constructs a concise shortlist from three evidence channels: the utility winner, the baseline contribution leaders, and the profiles most frequently on the utility–contribution Pareto frontier across Module 5's 18 cost scenarios. This is a transparent **screening rule** rather than a forecast-based optimization. Package identifiers and all metrics are read from the computed outputs.
+
+```{r evidence-based-shortlist}
+frontier_persistence <- frontier_persistence |>
+  mutate(frontier_scenarios = as.integer(frontier_scenarios),
+         frontier_share = as.numeric(frontier_share))
+frontier_top <- frontier_persistence |>
+  arrange(desc(frontier_scenarios), desc(frontier_share), desc(utility), package_id) |>
+  slice_head(n = 5)
+shortlist_ids <- unique(c(preference_leader$package_id,
+                          objective_summary$package_id,
+                          frontier_top$package_id))
+shortlist <- packages |>
+  filter(package_id %in% shortlist_ids) |>
+  left_join(frontier_persistence |>
+              select(package_id, frontier_scenarios, frontier_share), by = "package_id") |>
+  mutate(selection_reason = vapply(package_id, function(id) {
+    reasons <- c(
+      if (id == preference_leader$package_id) "Preference leader" else NULL,
+      if (id %in% objective_summary$package_id[objective_summary$decision_objective != "Consumer utility"])
+        "Accounting objective leader" else NULL,
+      if (id %in% frontier_top$package_id) "Persistent Pareto candidate" else NULL)
+    paste(reasons, collapse = "; ")
+  }, character(1))) |>
+  arrange(desc(utility), package_id)
+assert(nrow(shortlist) >= 1L && !anyDuplicated(shortlist$package_id),
+       "Management shortlist must contain unique feasible profiles")
+shortlist_display <- shortlist |>
+  select(package_id, games_n, price_usd, seat_id, promo_id,
+         utility, contribution_A, contribution_B, frontier_scenarios, selection_reason)
+knitr::kable(shortlist_display, digits = 3,
+             caption = "Evidence-based shortlist for operational review and market testing")
+```
+
+**Results and interpretation.** The shortlist contains `r nrow(shortlist)` distinct feasible designs. Its selection criteria preserve different management objectives instead of collapsing consumer utility and contribution into an arbitrary composite score. The `frontier_scenarios` column reports the number of assumed cost scenarios in which each profile is nondominated; it is **not** an estimated probability of market success.
+
+# 6. Decision robustness and the quality of evidence
+
+## 6.1 Summarize utility-ranking sensitivity
+
+Module 5 perturbs the 16 source part-worths at explicitly selected magnitudes and reranks the same 180 feasible packages. The simulation evaluates whether a preferred offer remains a leading candidate under hypothetical changes in model inputs. The table below presents the saved simulation summary without treating the perturbations as estimated sampling uncertainty.
+
+```{r preference-stability-results}
+assert(nrow(stability) > 0L, "Module 5 ranking stability output is empty")
+knitr::kable(stability, digits = 4,
+             caption = "Hypothetical preference-perturbation results from Module 5")
+```
+
+**Interpretation.** Winner retention, top-ten overlap and rank correlation characterize different aspects of stability: the first concerns the exact top-ranked profile, the second concerns the candidate set, and the third concerns the broader ranking. For practical decisions, stable membership in a high-quality shortlist can be more useful than insisting on one unchanging winner.
+
+## 6.2 Evaluate sensitivity to cost and promotional fulfillment
+
+The economic stress test crosses three seat-cost multipliers, three promotional-cost multipliers, and two fulfillment conventions. The resulting 18 scenarios provide an operational view of which contribution leaders change when accounting assumptions change.
+
+```{r cost-scenario-synthesis}
+cost_summary <- data.frame(
+  metric = c("Cost scenarios", "Distinct contribution-per-package leaders",
+             "Distinct contribution-per-game leaders",
+             "Distinct persistent Pareto candidates"),
+  result = c(nrow(cost_scenarios),
+             length(unique(cost_scenarios$leader_package)),
+             length(unique(cost_scenarios$per_game_leader)),
+             sum(frontier_persistence$frontier_scenarios > 0L)))
+knitr::kable(cost_summary, caption = "Decision sensitivity across economic assumptions")
+```
+
+**Results and interpretation.** Across `r nrow(cost_scenarios)` scenarios, `r length(unique(cost_scenarios$leader_package))` distinct offers lead on contribution per package, and `r length(unique(cost_scenarios$per_game_leader))` lead on contribution per game. The exercise clarifies which cost assumptions should be verified before an offer is scaled. A scenario is a **specified accounting possibility**, not a likelihood-weighted forecast.
+
+## 6.3 Show the utility–contribution trade-off among shortlisted offers
+
+The scatterplot positions each shortlisted package by consumer utility and modeled contribution per package under the once-per-package promotion convention. It visualizes the management trade-off without forcing utility units and dollars into a single numerical objective.
+
+```{r shortlist-frontier-visualization}
+p_shortlist <- ggplot(packages, aes(x = utility, y = contribution_A)) +
+  geom_point(color = "grey80", size = 1.4, alpha = 0.6) +
+  geom_point(data = shortlist, color = "#246A73", size = 2.8) +
+  geom_text(data = shortlist,
+            aes(label = package_id), check_overlap = TRUE, vjust = -0.7, size = 3) +
+  labs(x = "Aggregate additive utility",
+       y = "Modeled contribution per package (USD; promotion once)",
+       title = "Management shortlist across consumer appeal and unit economics",
+       subtitle = "Each point is a feasible design; labeled points meet the shortlist criteria") +
+  theme_minimal(base_size = 11)
+print(p_shortlist)
+```
+
+**Interpretation.** Designs higher on the vertical axis offer greater conditional contribution per sale; designs farther right have higher modeled utility. A package that is attractive on both dimensions is a strong testing candidate. The plot does not account for conversion rates, market size, seat inventory or substitution between packages.
+
+# 7. Managerial recommendations and implementation roadmap
+
+## 7.1 Prioritize product value before indiscriminate discounting
+
+Seat location and price account for the largest shares of the observed utility range. Management should use seat–price combinations as the primary structure for offer differentiation, while using package length and promotions to create targeted value. The nonlinear price response indicates that a $10 discount can have substantially different utility effects depending on the starting price. Discount policies should therefore be evaluated at the **specific proposed price points**.
+
+**Decision rule.** Retain the case's minimum-price restrictions, evaluate the incremental utility of each permitted change, and compare the resulting offer with alternatives that improve seats, game selection or benefits at a manageable delivery cost.
+
+## 7.2 Use six-game packages as a consumer-oriented starting point
+
+The aggregate model favors six games over three and ten. A six-game package therefore provides a defensible starting configuration for a preference-led offer. Longer packages may still lead on contribution per sale because they include more paid games; management should distinguish **consumer appeal**, **contribution per package**, and **contribution per game** when assessing package length.
+
+**Decision rule.** Include the six-game preference leader in the pilot, alongside at least one economically attractive alternative from the shortlist. Evaluate actual conversion, incremental attendance and seat availability before expanding the assortment.
+
+## 7.3 Select promotional benefits by incremental value and fulfillment cost
+
+Hot dog and soda delivers a relatively large modeled utility improvement at a modest reported direct cost. Its attractiveness depends on whether the benefit is redeemed once per package or for every game. Playoff priority may have no direct cost in the workbook but can impose inventory and opportunity costs. Merchandise and gift certificates require the same incremental-benefit-versus-fulfillment assessment.
+
+**Decision rule.** Specify redemption frequency and expected utilization for each promotional benefit. Obtain operational cost confirmation and compare the offer's incremental utility with a feasible alternative at the same ticket price.
+
+## 7.4 Use a multiobjective shortlist rather than a single winner
+
+The preference leader, contribution leaders and repeatedly Pareto-efficient profiles serve different managerial objectives. The final shortlist makes these trade-offs explicit. A smaller set of differentiated packages also makes a prospective experiment easier to interpret and administer.
+
+**Decision rule.** Advance shortlisted offers only after checking seat inventory, promotional fulfillment, sales-channel implementation and minimum-price compliance. Where the preference and economic rankings disagree, test the competing offers rather than assuming one objective dominates the other.
+
+## 7.5 Convert model recommendations into a controlled commercial test
+
+A pilot can evaluate whether stated preferences translate into observed ticket purchases. Assign eligible customers to a small set of policy-compliant package offers, maintain consistent marketing exposure, and measure the commercial outcomes that the aggregate conjoint table cannot identify.
+
+```{r pilot-measurement-plan}
+pilot_plan <- data.frame(
+  stage = c("1. Operational screening", "2. Offer design", "3. Controlled launch",
+            "4. Measurement", "5. Decision review"),
+  action = c(
+    "Confirm inventory, minimum prices, allocated versus incremental seat costs, and promotion redemption rules",
+    "Select a small, differentiated set from the evidence-based shortlist and document the offer components",
+    "Use a randomized or otherwise explicitly controlled offer comparison where operationally feasible",
+    "Track exposure, purchases, conversion, revenue, incremental contribution, redemption and attendance",
+    "Re-estimate demand and contribution with observed outcomes; retain, revise or discontinue each offer"),
+  evidence_needed = c(
+    "Seat inventory and finance/operations cost data",
+    "Final package descriptions and consistent eligibility rules",
+    "Offer assignment, dates, channels and customer eligibility",
+    "Transaction records, redemption and fulfillment costs",
+    "Observed incremental performance and uncertainty estimates"),
+  stringsAsFactors = FALSE)
+knitr::kable(pilot_plan, caption = "Operational roadmap from conjoint screening to empirical validation")
+```
+
+**Interpretation.** The pilot adds the behavioral evidence required to estimate conversion and incremental economics. Tracking **incremental contribution across actual sales**, rather than contribution per hypothetical package sold, is the appropriate next step toward a commercially validated product decision.
+
+# 8. Research conclusions, contributions and limitations
+
+## 8.1 Integrated findings
+
+The project yields five connected conclusions:
+
+1. **Preference concentration:** Seat location and ticket price account for the majority of the observed part-worth range, making them the central dimensions of package differentiation.
+2. **Nonlinear price trade-offs:** Equal nominal discounts generate unequal estimated utility gains across the four studied price points. Reference-specific comparisons are more informative than a universal price coefficient.
+3. **Cost-aware feature design:** Selected promotions and seat improvements can create substantial modeled consumer value, but their commercial attractiveness depends on delivery costs, package length and fulfillment rules.
+4. **Constrained, multiobjective optimization:** Of 240 possible designs, 180 comply with seat-price policies. The preferred offer need not be the leader on contribution per sale or contribution per game.
+5. **Robust decision support:** Independent arithmetic checks and explicit sensitivity experiments make the shortlist more transparent and identify assumptions that warrant operational verification.
+
+## 8.2 Analytical and methodological contributions
+
+The project integrates **conjoint preference measurement**, **price-equivalent attribute trade-offs**, **exhaustive constrained enumeration**, **conditional unit-economics calculations**, **Pareto analysis**, and **sensitivity testing** in one reproducible workflow. The combined framework converts a set of aggregate part-worth utilities into concrete, auditable product-design decisions.
+
+Its most important methodological feature is the separation of three layers of evidence: **source estimates** (the workbook's part-worths and reported costs), **deterministic implications** (importance, feasible rankings and accounting calculations), and **scenario assumptions** (hypothetical utility perturbations and cost multipliers). This structure makes it possible to trace each recommendation to the evidence and decision rules that support it.
+
+## 8.3 Limits of inference and future research
+
+The available workbook provides **aggregate part-worths**, rather than respondent-level choice tasks or transaction outcomes. Consequently, the analysis cannot estimate customer-level preference heterogeneity, infer standard errors or confidence intervals for the supplied part-worths, validate held-out choice predictions, or forecast purchase probabilities and market shares. The utility-perturbation experiments explore assumed parameter changes; they are not a substitute for statistical uncertainty estimated from respondent data.
+
+The economic analysis reports **conditional contribution per package sold** under two promotional fulfillment conventions. Actual profit requires observed demand, incremental costs, inventory and capacity constraints, cannibalization effects, and a defined commercial time horizon. Range-based attribute importance is also dependent on the specific attribute levels included in the conjoint design.
+
+Future research should estimate a choice model from respondent-level tasks, assess customer segments and uncertainty, calibrate preferences against observed purchase behavior, and integrate inventory-constrained revenue management. A prospective offer experiment can then test whether the shortlist improves actual conversion, attendance and incremental contribution.
+
+# 9. Final validation, research exports and reproducibility
+
+## 9.1 Reconcile final conclusions with the source and earlier modules
+
+The final checks verify the source design, policy compliance, utility arithmetic, accounting formulas, and links to earlier module outputs. These checks protect the final decision tables against accidental changes in data types, join keys or calculation conventions.
+
+```{r final-reconciliation}
+lookup <- function(attribute, ids) {
+  tab <- partworth |> filter(.data$attribute == .env$attribute) |>
+    select(level_id, utility)
+  tab$utility[match(ids, tab$level_id)]
+}
+recomputed_utility <- lookup("Number of Games", packages$games_id) +
+  lookup("Ticket Price", packages$price_id) +
+  lookup("Ticket Location", packages$seat_id) +
+  lookup("Promotional Item", packages$promo_id)
+assert(all(is.finite(recomputed_utility)), "Utility joins contain missing values")
+revenue_check <- packages$games_n * packages$price_usd
+contribution_A_check <- packages$games_n *
+  (packages$price_usd - packages$seat_cost_usd) - packages$promo_cost_usd
+contribution_B_check <- packages$games_n *
+  (packages$price_usd - packages$seat_cost_usd - packages$promo_cost_usd)
+checks <- data.frame(
+  check = c("Source levels equal 16", "Theoretical combinations equal 240",
+            "Feasible packages equal 180", "All seat-price restrictions satisfied",
+            "Additive utility reconciles", "Package revenue reconciles",
+            "Contribution A reconciles", "Contribution B reconciles",
+            "Preference leader matches highest utility", "All 18 cost scenarios present"),
+  passed = c(nrow(partworth) == 16L, prod(as.integer(table(partworth$attribute))) == 240L,
+             nrow(packages) == 180L,
+             all(packages$price_usd[packages$seat_id == 4L] >= 60) &&
+               all(packages$price_usd[packages$seat_id == 3L] >= 25),
+             max(abs(recomputed_utility - packages$utility)) < 1e-7,
+             max(abs(revenue_check - packages$revenue_per_package)) < 1e-7,
+             max(abs(contribution_A_check - packages$contribution_A)) < 1e-7,
+             max(abs(contribution_B_check - packages$contribution_B)) < 1e-7,
+             abs(preference_leader$utility - max(packages$utility)) < 1e-7,
+             nrow(cost_scenarios) == 18L))
+assert(all(checks$passed), paste("Final validation failed:",
+                                paste(checks$check[!checks$passed], collapse = "; ")))
+knitr::kable(checks, caption = "Final research synthesis validation")
+```
+
+**Results and interpretation.** All `r nrow(checks)` final checks must pass before the report exports its management tables. The validation covers arithmetic and feasibility; the separate empirical research agenda addresses the prediction and demand questions that require new observations.
+
+## 9.2 Export decision-ready tables and figures
+
+The exported files provide a compact record of the final evidence, shortlist, recommendations and validation status. Each table is derived from the same verified inputs used in the report.
+
+```{r export-final-artifacts}
+recommendations <- data.frame(
+  priority = c(1, 2, 3, 4, 5),
+  recommendation = c(
+    "Use seat-price combinations as the primary offer design lever",
+    "Pilot a six-game, high-utility offer alongside an economic alternative",
+    "Evaluate promotions by incremental utility, redemption frequency and cost",
+    "Compare utility, contribution and Pareto persistence before launch",
+    "Validate conversion and incremental contribution in a controlled pilot"),
+  supporting_evidence = c(
+    "Module 2 attribute importance and Module 3 price response",
+    "Module 2 game-count preference and Module 4 feasible objective leaders",
+    "Module 3 promotion valuation and Module 5 economic scenarios",
+    "Modules 4–5 objective leaders and scenario frontiers",
+    "Module 5 validation limits and Module 6 implementation plan"),
+  stringsAsFactors = FALSE)
+research_evidence <- data.frame(
+  conclusion = c("Seat and price are the dominant modeled attributes",
+                 "Price sensitivity varies by interval",
+                 "Promotion value depends on the cost and price reference",
+                 "The optimal offer depends on the objective",
+                 "Cost assumptions can change the accounting decision",
+                 "Market demand and realized profit require field evidence"),
+  evidence_type = c("Workbook-derived", "Workbook-derived", "Workbook-derived plus accounting assumptions",
+                    "Deterministic model implication", "Assumption-based sensitivity",
+                    "Empirical evidence gap"),
+  supporting_module = c("02", "03", "03", "04", "05", "05–06"),
+  stringsAsFactors = FALSE)
+save_table(input_inventory, "06_evidence_inventory.csv")
+save_table(level_extremes, "06_preference_level_summary.csv")
+save_table(price_differences, "06_price_response_summary.csv")
+save_table(promo_summary, "06_promotion_value_summary.csv")
+save_table(objective_summary, "06_objective_leader_comparison.csv")
+save_table(shortlist_display, "06_management_shortlist.csv")
+save_table(cost_summary, "06_cost_sensitivity_summary.csv")
+save_table(pilot_plan, "06_pilot_implementation_plan.csv")
+save_table(recommendations, "06_managerial_recommendations.csv")
+save_table(research_evidence, "06_research_evidence_matrix.csv")
+save_table(checks, "06_final_validation.csv")
+save_figure(p_importance, "06_attribute_importance.png", 9, 5.5)
+save_figure(p_price, "06_price_utility_curve.png", 9, 5.5)
+save_figure(p_shortlist, "06_management_shortlist_tradeoff.png", 10, 6)
+manifest <- data.frame(type = c(rep("CSV", 11), rep("PNG", 3)),
+  filename = c("06_evidence_inventory.csv", "06_preference_level_summary.csv",
+               "06_price_response_summary.csv", "06_promotion_value_summary.csv",
+               "06_objective_leader_comparison.csv", "06_management_shortlist.csv",
+               "06_cost_sensitivity_summary.csv", "06_pilot_implementation_plan.csv",
+               "06_managerial_recommendations.csv", "06_research_evidence_matrix.csv",
+               "06_final_validation.csv", "06_attribute_importance.png",
+               "06_price_utility_curve.png", "06_management_shortlist_tradeoff.png"))
+knitr::kable(manifest, caption = "Final research and management deliverables")
+```
+
+# 10. Final managerial conclusion
+
+The conjoint evidence supports a disciplined approach to multigame ticket design: **start with the seat, price and package features customers value; enforce the organization's pricing policies; compare permitted offers on both preference and conditional economics; and test a small, robust shortlist in the market.**
+
+The preferred six-game offer provides a consumer-oriented starting point, while alternative contribution leaders and persistently efficient designs provide economically motivated comparisons. The strongest management recommendation is therefore **a validated, multiobjective shortlist followed by a controlled commercial pilot**, rather than immediate commitment to a single mathematically highest-scoring package.
+
+This framework links consumer preference analysis to pricing, operational feasibility and evidence-based product decisions. It provides a transparent basis for management action today and a concrete research path toward demand estimation and inventory-aware revenue optimization.
+
+# References and data provenance
+
+- Wilcox, Ronald T. *Portland Trail Blazers*. Darden Business Publishing, case UV2971. Business setting, research design, pricing policy and reported costs.
+- Xiang, Keman. *Portland Trail Blazers_Keman_Xiang.xlsx*. `Table 1. Utility score data.`, `Product Analysis`, `Willingness to pay` and `Attribute Tradeoff` worksheets. Primary numerical inputs and case calculations.
+- Xiang, Keman. *Assignment 3* . Supporting case interpretation and analytical context.
+- Xiang, Keman. *Portland Trail Blazers: Conjoint Analysis*, Modules 1–5. Validated inputs, utility importance, WTP, constrained package economics and sensitivity outputs.

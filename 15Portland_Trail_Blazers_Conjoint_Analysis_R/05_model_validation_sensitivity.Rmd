@@ -1,0 +1,718 @@
+---
+title: "Portland Trail Blazers: Conjoint Analysis for Ticket Package Design, Pricing, and Economic Decision-Making"
+subtitle: "Module 5 | Model Validation, Ranking Stability & Decision Sensitivity"
+author: "Keman Xiang"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: readable
+    highlight: tango
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.width = 9, fig.height = 5.5, dpi = 140)
+required <- c("dplyr", "tidyr", "ggplot2", "knitr")
+missing <- required[!vapply(required, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing)) stop("Install required packages: ", paste(missing, collapse = ", "))
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+root_candidates <- c(".", "..")
+roots <- root_candidates[file.exists(file.path(root_candidates, "data", "processed", "partworth_levels.csv"))]
+if (!length(roots)) stop("Run Module 1 and make data/processed/partworth_levels.csv available.")
+project_root <- normalizePath(roots[[1]], mustWork = TRUE)
+source_workbook <- file.path(project_root, "data", "Portland Trail Blazers_Keman_Xiang.xlsx")
+if (!file.exists(source_workbook)) stop("Source workbook missing: ", source_workbook)
+source_partworth <- file.path(project_root, "data", "processed", "partworth_levels.csv")
+source_packages <- file.path(project_root, "outputs", "tables", "04_feasible_package_economics.csv")
+if (!file.exists(source_packages)) stop("Knit Module 4 first: missing 04_feasible_package_economics.csv")
+tables_dir <- file.path(project_root, "outputs", "tables")
+figures_dir <- file.path(project_root, "outputs", "figures")
+dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(figures_dir, recursive = TRUE, showWarnings = FALSE)
+assert <- function(condition, message) if (!isTRUE(condition)) stop(message, call. = FALSE)
+fmt <- function(x, digits = 4) formatC(x, digits = digits, format = "f")
+money <- function(x) paste0("$", fmt(x, 2))
+save_table <- function(x, filename) utils::write.csv(x, file.path(tables_dir, filename), row.names = FALSE, na = "")
+save_figure <- function(p, filename, width = 9, height = 5.5) {
+  ggplot2::ggsave(file.path(figures_dir, filename), plot = p, width = width, height = height, dpi = 180)
+}
+```
+
+# 1. Business context and analytical objectives
+
+The Portland Trail Blazers faced a decline in attendance and needed multigame ticket offers that could attract former purchasers while respecting seat-pricing policies and the economics of package delivery. The conjoint study provides a structured way to compare the perceived value of game counts, prices, seat locations, and promotional items. The commercial decision, however, depends on whether the preferred packages remain attractive under plausible changes in the inputs and accounting conventions.
+
+The case reports 204 valid responses among 960 contacted former multigame or season-ticket purchasers, with 20 conjoint tasks per respondent. The project workbook contains **16 aggregate part-worth utility estimates** and a seat/promotion cost schedule. Modules 1–3 establish those inputs and their consumer-value implications; Module 4 enumerates **240 theoretical profiles**, enforces the two minimum-price restrictions, and evaluates **180 feasible packages** using utility and two contribution scenarios.
+
+This analysis evaluates four questions:
+
+1. **Computational validity:** Can the Module 4 scores, feasibility decisions, and contribution measures be independently reproduced from the validated attribute-level inputs?
+2. **Ranking stability:** How separated are the highest-utility designs, and how often do rankings change under explicitly defined, hypothetical part-worth perturbations?
+3. **Economic robustness:** Which contribution leaders and Pareto-efficient designs persist when seat allocations, promotional costs, and fulfillment frequency vary?
+4. **Evidence quality:** Which conclusions are supported by arithmetic and scenario checks, and which require individual-level choice data or a prospective purchase test?
+
+The unit of analysis remains the **ticket-package profile**. A profile's utility is a systematic preference score; contribution is a conditional accounting amount per package sold.
+
+# 2. Data provenance and validation strategy
+
+## 2.1 Read the analytical outputs and their original input interface
+
+The analysis reads `data/processed/partworth_levels.csv` produced from `Portland Trail Blazers_Keman_Xiang.xlsx` by Module 1 and `outputs/tables/04_feasible_package_economics.csv` produced by Module 4. The former provides the independent attribute-level reference for checking the latter. Identifiers are treated as keys, while product labels make results interpretable.
+
+```{r input-audit}
+partworth <- utils::read.csv(source_partworth, stringsAsFactors = FALSE, check.names = FALSE)
+packages <- utils::read.csv(source_packages, stringsAsFactors = FALSE, check.names = FALSE)
+required_pw <- c("attribute", "level_id", "utility", "cost_usd", "product_level")
+required_pkg <- c("package_id", "games_id", "price_id", "seat_id", "promo_id",
+                  "games_n", "price_usd", "seat_cost_usd", "promo_cost_usd",
+                  "utility", "revenue_per_package", "seat_allocation_per_package",
+                  "contribution_A", "contribution_B")
+assert(all(required_pw %in% names(partworth)), "Part-worth input fields are incomplete")
+assert(all(required_pkg %in% names(packages)), "Module 4 export fields are incomplete")
+partworth <- partworth |>
+  mutate(level_id = as.integer(level_id), utility = as.numeric(utility),
+         cost_usd = as.numeric(cost_usd), product_level = as.character(product_level))
+packages <- packages |>
+  mutate(across(c(games_id, price_id, seat_id, promo_id), as.integer),
+         across(c(games_n, price_usd, seat_cost_usd, promo_cost_usd, utility,
+                  revenue_per_package, seat_allocation_per_package,
+                  contribution_A, contribution_B), as.numeric)) |>
+  arrange(package_id)
+expected_attributes <- c("Number of Games", "Ticket Price", "Ticket Location", "Promotional Item")
+expected_counts <- c(3L, 4L, 4L, 5L)
+actual_counts <- as.integer(table(factor(partworth$attribute, levels = expected_attributes)))
+assert(identical(actual_counts, expected_counts), "Attribute-level counts differ from the source design")
+assert(nrow(partworth) == 16L && !anyDuplicated(partworth[c("attribute", "level_id")]),
+       "Expected 16 unique source attribute levels")
+assert(nrow(packages) == 180L && !anyDuplicated(packages$package_id),
+       "Expected 180 unique feasible package identifiers")
+assert(all(is.finite(partworth$utility)) && all(is.finite(packages$utility)),
+       "Nonfinite utility inputs")
+input_summary <- data.frame(
+  item = c("Source part-worth levels", "Package profiles from Module 4",
+           "Unique package identifiers", "Distinct seat-price pairs"),
+  count = c(nrow(partworth), nrow(packages), length(unique(packages$package_id)),
+            nrow(unique(packages[c("seat_id", "price_id")]))))
+knitr::kable(input_summary, caption = "Analytical input inventory")
+```
+
+**Interpretation.** The input audit confirms `r nrow(partworth)` part-worth levels and `r nrow(packages)` feasible package profiles. The latter are combinations of the former, not additional observations from the survey. This distinction determines the scope of subsequent model checks: the project can validate its transformations and decision arithmetic directly, while empirical prediction requires observed choices.
+
+## 2.2 Reconstruct each package score from the attribute-level table
+
+The project independently joins the four attribute-level lookup tables to each package identifier. It then recalculates additive utility, package revenue, seat allocation, and contribution under both promotional cost conventions:
+
+$$V_j = u_{G,j}+u_{P,j}+u_{L,j}+u_{M,j}$$
+$$C_j^{(A)}=G_j(P_j-C_{L,j})-C_{M,j},\qquad
+C_j^{(B)}=G_j(P_j-C_{L,j}-C_{M,j}).$$
+
+Here, **A** charges promotion cost once per package and **B** charges it once per game. Seat costs are the case's managerial allocations; neither contribution measure incorporates purchase demand.
+
+```{r independent-recalculation}
+lookup <- function(attribute_name, prefix, include_cost = FALSE) {
+  x <- partworth |> filter(attribute == attribute_name) |>
+    transmute(level_id, component = utility, level_cost = cost_usd)
+  names(x)[names(x) == "level_id"] <- paste0(prefix, "_id")
+  names(x)[names(x) == "component"] <- paste0(prefix, "_u")
+  names(x)[names(x) == "level_cost"] <- paste0(prefix, "_cost")
+  if (!include_cost) x <- x[, setdiff(names(x), paste0(prefix, "_cost")), drop = FALSE]
+  x
+}
+recalculated <- packages |>
+  select(package_id, games_id, price_id, seat_id, promo_id) |>
+  left_join(lookup("Number of Games", "games"), by = "games_id") |>
+  left_join(lookup("Ticket Price", "price"), by = "price_id") |>
+  left_join(lookup("Ticket Location", "seat", TRUE), by = "seat_id") |>
+  left_join(lookup("Promotional Item", "promo", TRUE), by = "promo_id") |>
+  left_join(packages |> select(package_id, games_n, price_usd), by = "package_id") |>
+  mutate(utility_recomputed = games_u + price_u + seat_u + promo_u,
+         revenue_recomputed = games_n * price_usd,
+         seat_allocation_recomputed = games_n * seat_cost,
+         contribution_A_recomputed = revenue_recomputed - seat_allocation_recomputed - promo_cost,
+         contribution_B_recomputed = revenue_recomputed - seat_allocation_recomputed - games_n * promo_cost)
+assert(nrow(recalculated) == 180L && !anyNA(recalculated$utility_recomputed),
+       "Independent lookup produced missing or duplicate package records")
+audit <- packages |>
+  select(package_id, utility, revenue_per_package, seat_allocation_per_package,
+         contribution_A, contribution_B, seat_cost_usd, promo_cost_usd) |>
+  left_join(recalculated |>
+              select(package_id, utility_recomputed, revenue_recomputed,
+                     seat_allocation_recomputed, contribution_A_recomputed,
+                     contribution_B_recomputed, seat_cost, promo_cost), by = "package_id") |>
+  mutate(utility_error = utility - utility_recomputed,
+         revenue_error = revenue_per_package - revenue_recomputed,
+         seat_allocation_error = seat_allocation_per_package - seat_allocation_recomputed,
+         contribution_A_error = contribution_A - contribution_A_recomputed,
+         contribution_B_error = contribution_B - contribution_B_recomputed,
+         seat_cost_error = seat_cost_usd - seat_cost,
+         promo_cost_error = promo_cost_usd - promo_cost)
+error_columns <- grep("_error$", names(audit), value = TRUE)
+audit_summary <- data.frame(
+  quantity = error_columns,
+  maximum_absolute_difference = vapply(audit[error_columns], function(x) max(abs(x)), numeric(1)))
+assert(all(is.finite(as.matrix(audit[error_columns]))), "Nonfinite audit differences")
+assert(all(audit_summary$maximum_absolute_difference < 1e-8),
+       "Module 4 results differ from the independent attribute-level recalculation")
+knitr::kable(audit_summary, digits = 10,
+             caption = "Independent arithmetic audit: maximum absolute differences")
+```
+
+**Results and interpretation.** The largest absolute difference across all checked quantities is `r fmt(max(audit_summary$maximum_absolute_difference), 10)`. Agreement within the stated numerical tolerance supports the traceability of Module 4's 180 package records to the workbook-derived part-worth and cost schedules. It is evidence of **computational consistency**.
+
+## 2.3 Verify policy compliance and the completeness of the feasible design
+
+The case excludes 200-level midcourt below $60 and 300-level midcourt below $25. The independent enumeration below verifies that Module 4 contains exactly the permitted Cartesian-product combinations, rather than merely checking the number of rows.
+
+```{r feasible-set-audit}
+full_design <- expand.grid(games_id = 1:3, price_id = 1:4,
+                           seat_id = 1:4, promo_id = 1:5,
+                           KEEP.OUT.ATTRS = FALSE) |>
+  as_tibble() |>
+  mutate(permitted = !(seat_id == 4L & price_id < 4L) &
+                     !(seat_id == 3L & price_id < 2L))
+permitted_keys <- full_design |> filter(permitted) |>
+  select(games_id, price_id, seat_id, promo_id)
+observed_keys <- packages |> select(games_id, price_id, seat_id, promo_id)
+missing_keys <- dplyr::anti_join(permitted_keys, observed_keys,
+                                by = c("games_id", "price_id", "seat_id", "promo_id"))
+extra_keys <- dplyr::anti_join(observed_keys, permitted_keys,
+                              by = c("games_id", "price_id", "seat_id", "promo_id"))
+assert(nrow(full_design) == 240L && nrow(permitted_keys) == 180L,
+       "Full-factorial or feasibility enumeration failed")
+assert(nrow(missing_keys) == 0L && nrow(extra_keys) == 0L &&
+         !anyDuplicated(observed_keys), "Module 4 feasible set differs from independent enumeration")
+feasibility_audit <- data.frame(
+  criterion = c("Full-factorial profiles", "Permitted profiles", "Excluded profiles",
+                "Missing permitted combinations", "Unexpected combinations"),
+  result = c(nrow(full_design), nrow(permitted_keys), sum(!full_design$permitted),
+             nrow(missing_keys), nrow(extra_keys)))
+knitr::kable(feasibility_audit, caption = "Independent feasibility and completeness audit")
+```
+
+**Interpretation.** All 180 permissible designs appear exactly once, with 60 excluded by management's seat-price policy. This establishes that the optimization comparison covers the full *specified* discrete choice space; it does not imply that unlisted prices or other package attributes have been optimized.
+
+# 3. Baseline product rankings and decision margins
+
+## 3.1 Examine the leading utility profiles
+
+Ranking stability depends on the gap between competing profiles. A large score difference makes a reversal harder under small input changes; a narrow gap signals a decision that is sensitive to modest changes in the part-worth assumptions. The analysis therefore reports both the leading packages and their distances from the maximum.
+
+```{r baseline-rankings}
+baseline <- packages |>
+  arrange(desc(utility), package_id) |>
+  mutate(utility_rank = row_number(), utility_gap_from_best = first(utility) - utility)
+best <- baseline |> slice(1)
+runner_up <- baseline |> slice(2)
+unique_scores <- sort(unique(baseline$utility), decreasing = TRUE)
+first_distinct_gap <- if (length(unique_scores) > 1) unique_scores[1] - unique_scores[2] else NA_real_
+top_table <- baseline |> slice_head(n = 12) |>
+  select(utility_rank, package_id, games_n, price_usd, seat_id, promo_id,
+         utility, utility_gap_from_best, contribution_A, contribution_B)
+knitr::kable(top_table, digits = 5,
+             caption = "Top feasible packages and their utility margins")
+```
+
+**Results and interpretation.** The highest-scoring package is `r best$package_id`, with `r best$games_n` games, a `r money(best$price_usd)` per-game ticket price, seat level `r best$seat_id`, and promotion level `r best$promo_id` (utility `r fmt(best$utility, 5)`). The first distinct utility score lies `r fmt(first_distinct_gap, 5)` points below the maximum. When two profiles tie, their deterministic ordering by package identifier is a reporting convention; it does not establish a consumer preference between them.
+
+## 3.2 Compare utility and accounting rankings
+
+Module 4 evaluates contribution both per package and per game. This distinction is central when package length varies: a ten-game offer may generate greater accounting contribution *per sale* even when its stated preference score is lower. We calculate the baseline leaders using explicit, repeatable tie-breaking rules.
+
+```{r baseline-leaders}
+leader_for <- function(data, objective) {
+  assert(nrow(data) > 0L, "Cannot select a leader from an empty candidate set")
+  data |> arrange(desc(.data[[objective]]), desc(utility), package_id) |> slice(1)
+}
+packages <- packages |>
+  mutate(contribution_A_per_game = contribution_A / games_n,
+         contribution_B_per_game = contribution_B / games_n)
+objectives <- c("utility", "contribution_A", "contribution_B",
+                "contribution_A_per_game", "contribution_B_per_game")
+baseline_leaders <- bind_rows(lapply(objectives, function(objective) {
+  leader_for(packages, objective) |>
+    mutate(objective = objective) |>
+    select(objective, package_id, games_n, price_usd, seat_id, promo_id,
+           utility, contribution_A, contribution_B,
+           contribution_A_per_game, contribution_B_per_game)
+}))
+knitr::kable(baseline_leaders, digits = 3,
+             caption = "Baseline preference and contribution leaders")
+```
+
+**Interpretation.** The five objectives distinguish consumer appeal, accounting contribution per transaction, and accounting contribution per included game. Differences among the leaders are a feature of the decision problem, not a model failure. The accounting rankings assume one package is sold and therefore cannot establish which design maximizes total operating profit.
+
+# 4. Utility-ranking sensitivity to hypothetical part-worth changes
+
+## 4.1 Define a transparent perturbation experiment
+
+The workbook provides aggregate part-worth point estimates without their covariance matrix or respondent-level records. To assess **scenario robustness**, the project applies controlled perturbations to the 16 estimated part-worths. These are *assumed changes in model inputs*, rather than resampled survey respondents or estimates of sampling uncertainty.
+
+For each attribute level, the experiment adds a random offset drawn uniformly from $[-\delta,\delta]$ and centers offsets **within each attribute**. Centering preserves the attribute's arbitrary utility origin, while allowing relative level preferences to change. The same perturbed coefficient vector is applied to all 180 packages in each iteration, maintaining the structural dependence between package scores. A fixed seed ensures exact reproducibility.
+
+The perturbation magnitudes below (`0.01`, `0.03`, and `0.05` utility points) are **analyst-defined stress levels**; the workbook provides no statistical basis for treating them as confidence bounds. Results should be read as *conditional stability under those assumptions*.
+
+```{r utility-perturbation-setup}
+set.seed(20261114)
+partworth_ordered <- partworth |>
+  mutate(attribute_order = match(attribute, expected_attributes)) |>
+  arrange(attribute_order, level_id)
+coefficients <- partworth_ordered$utility
+attribute_groups <- split(seq_len(nrow(partworth_ordered)), partworth_ordered$attribute)
+# Each profile has exactly one active level in each of four attribute blocks.
+X <- matrix(0, nrow = nrow(packages), ncol = nrow(partworth_ordered))
+for (i in seq_len(nrow(partworth_ordered))) {
+  attribute_name <- partworth_ordered$attribute[i]
+  key <- switch(attribute_name,
+                "Number of Games" = "games_id",
+                "Ticket Price" = "price_id",
+                "Ticket Location" = "seat_id",
+                "Promotional Item" = "promo_id")
+  X[, i] <- as.numeric(packages[[key]] == partworth_ordered$level_id[i])
+}
+assert(all(rowSums(X) == 4), "Each package must select four attribute levels")
+assert(max(abs(as.vector(X %*% coefficients) - packages$utility)) < 1e-8,
+       "Design matrix does not reproduce baseline utility")
+perturbation_levels <- c(0.01, 0.03, 0.05)
+iterations <- 1000L
+make_perturbed_coefficients <- function(delta, repetitions) {
+  offsets <- matrix(stats::runif(length(coefficients) * repetitions, -delta, delta),
+                    nrow = length(coefficients), ncol = repetitions)
+  for (idx in attribute_groups) {
+    offsets[idx, ] <- sweep(offsets[idx, , drop = FALSE], 2,
+                            colMeans(offsets[idx, , drop = FALSE]), "-")
+  }
+  sweep(offsets, 1, coefficients, "+")
+}
+knitr::kable(data.frame(stress_level = perturbation_levels,
+                        iterations = iterations,
+                        interpretation = "Hypothetical centered part-worth perturbation"),
+             caption = "Prespecified utility-sensitivity design")
+```
+
+**Interpretation.** The design matrix exactly reproduces the original utility scores before any perturbation. Each experiment then changes the common underlying part-worth vector, so packages sharing an attribute level move together. This is more coherent than independently adding noise to the 180 package scores.
+
+## 4.2 Measure winner retention, rank correlation, and top-ten overlap
+
+Three complementary measures describe stability: whether the original top package remains the winner, Spearman correlation between baseline and perturbed rankings, and the share of baseline top-ten packages retained in the perturbed top ten. The same fixed package identifier is used to track the baseline winner across iterations.
+
+```{r utility-ranking-simulation}
+base_order <- order(-packages$utility, packages$package_id)
+base_top10 <- packages$package_id[base_order[1:10]]
+base_winner <- packages$package_id[base_order[1]]
+base_rank <- rank(-packages$utility, ties.method = "average")
+sim_details <- vector("list", length(perturbation_levels))
+for (k in seq_along(perturbation_levels)) {
+  delta <- perturbation_levels[k]
+  beta_sim <- make_perturbed_coefficients(delta, iterations)
+  scores <- X %*% beta_sim
+  winners <- character(iterations)
+  spearman <- numeric(iterations)
+  top10_overlap <- numeric(iterations)
+  for (b in seq_len(iterations)) {
+    ranked <- order(-scores[, b], packages$package_id)
+    winners[b] <- packages$package_id[ranked[1]]
+    spearman[b] <- suppressWarnings(stats::cor(base_rank,
+                     rank(-scores[, b], ties.method = "average"), method = "pearson"))
+    top10_overlap[b] <- sum(packages$package_id[ranked[1:10]] %in% base_top10) / 10
+  }
+  sim_details[[k]] <- data.frame(stress_delta = delta, iteration = seq_len(iterations),
+                                  winner_id = winners, baseline_winner_retained = winners == base_winner,
+                                  spearman_rank_correlation = spearman,
+                                  top10_overlap = top10_overlap)
+}
+simulation_results <- bind_rows(sim_details)
+stability_summary <- simulation_results |>
+  group_by(stress_delta) |>
+  summarise(iterations = n(), winner_retention_rate = mean(baseline_winner_retained),
+            mean_rank_correlation = mean(spearman_rank_correlation),
+            median_top10_overlap = stats::median(top10_overlap),
+            mean_top10_overlap = mean(top10_overlap), .groups = "drop")
+assert(nrow(simulation_results) == length(perturbation_levels) * iterations,
+       "Simulation output is incomplete")
+assert(all(is.finite(simulation_results$spearman_rank_correlation)),
+       "Undefined rank correlation in perturbation scenarios")
+knitr::kable(stability_summary, digits = 4,
+             caption = "Conditional ranking stability across utility stress levels")
+```
+
+**Results and interpretation.** Under the smallest perturbation, the baseline winner is retained in `r fmt(100 * stability_summary$winner_retention_rate[1], 1)`% of scenarios. Under the largest perturbation, retention is `r fmt(100 * tail(stability_summary$winner_retention_rate, 1), 1)`%. These frequencies measure stability **within the specified hypothetical perturbation experiment**; they are not estimated probabilities that consumers will choose the package. Rank correlation and top-ten overlap provide additional evidence about the stability of the broader shortlist, even when the single highest-ranked design changes.
+
+## 4.3 Visualize ranking stability and competing winners
+
+The figure summarizes the fraction of scenarios that preserve the baseline winner and the mean top-ten overlap. The two measures answer different managerial questions: stability of one flagship offer versus stability of the broader set of plausible alternatives.
+
+```{r utility-stability-figure}
+stability_plot_data <- stability_summary |>
+  select(stress_delta, winner_retention_rate, mean_top10_overlap) |>
+  pivot_longer(cols = c(winner_retention_rate, mean_top10_overlap),
+               names_to = "metric", values_to = "fraction") |>
+  mutate(metric = recode(metric,
+                         winner_retention_rate = "Baseline winner retained",
+                         mean_top10_overlap = "Mean top-10 overlap"))
+p_stability <- ggplot(stability_plot_data,
+                      aes(x = stress_delta, y = fraction, color = metric)) +
+  geom_line(linewidth = 0.9) + geom_point(size = 2.5) +
+  scale_y_continuous(limits = c(0, 1), labels = function(x) paste0(round(100*x), "%")) +
+  scale_x_continuous(breaks = perturbation_levels) +
+  labs(title = "Stability of preferred packages under utility perturbations",
+       subtitle = "Uniform centered coefficient shocks; fixed seed; 1,000 scenarios per level",
+       x = "Maximum absolute raw coefficient shock (utility points)",
+       y = "Scenario fraction", color = "Measure") + theme_minimal(base_size = 11)
+print(p_stability)
+winner_frequency <- simulation_results |>
+  count(stress_delta, winner_id, name = "wins") |>
+  group_by(stress_delta) |> mutate(share = wins / sum(wins)) |>
+  ungroup() |> arrange(stress_delta, desc(wins), winner_id)
+knitr::kable(winner_frequency |> group_by(stress_delta) |>
+               slice_max(order_by = wins, n = 5, with_ties = FALSE) |> ungroup(),
+             digits = 3, caption = "Most frequent winning designs in each stress experiment")
+```
+
+**Figure interpretation.** As the assumed perturbation magnitude increases, package scores can reorder. A stable top-ten set with an unstable single winner would support retaining several alternatives for further testing rather than relying on one precise rank. The results should be interpreted alongside the original score margins and the managerial feasibility constraints.
+
+# 5. Economic sensitivity to cost assumptions
+
+## 5.1 Define cost and fulfillment scenarios
+
+The source case provides seat allocations of $10, $12, $18, and $40 per seat and promotional costs of $0, $3.25, $12, $10, and $0. The economic calculation depends on how these costs are applied. This section varies two **assumed cost multipliers** around the reported values and compares both fulfillment conventions. The multipliers are stress-test choices, not additional observed cost data.
+
+For seat allocation multiplier $s$ and promotion multiplier $m$:
+
+$$C_j(s,m,f)=G_j(P_j-sC_{L,j})-mC_{M,j}f_j,$$
+
+where $f_j=1$ for once-per-package fulfillment and $f_j=G_j$ for once-per-game fulfillment. The scenarios keep the original seat-price policy and the reported utility scores fixed, isolating the accounting effect.
+
+```{r economic-scenarios}
+scenario_grid <- tidyr::expand_grid(
+  seat_multiplier = c(0.8, 1.0, 1.2),
+  promo_multiplier = c(0.5, 1.0, 1.5),
+  fulfillment = c("Once per package", "Once per game")) |>
+  mutate(scenario_id = sprintf("SC%02d", row_number()))
+scenario_packages <- tidyr::crossing(
+  packages |> select(package_id, games_n, price_usd, seat_id, promo_id,
+                     utility, seat_cost_usd, promo_cost_usd), scenario_grid) |>
+  mutate(revenue = games_n * price_usd,
+         seat_allocation = games_n * seat_cost_usd * seat_multiplier,
+         promotion_expense = promo_cost_usd * promo_multiplier *
+           if_else(fulfillment == "Once per package", 1, games_n),
+         contribution = revenue - seat_allocation - promotion_expense,
+         contribution_per_game = contribution / games_n)
+assert(nrow(scenario_packages) == nrow(packages) * nrow(scenario_grid),
+       "Cost-scenario grid is incomplete")
+knitr::kable(scenario_grid, caption = "Economic stress-test assumptions")
+```
+
+**Interpretation.** The `r nrow(scenario_grid)` scenarios combine the two delivery conventions with three seat-cost and three promotion-cost multipliers. They test how the accounting comparison changes when costs differ from the workbook's reported schedule. The **reported baseline** is the multiplier pair `(1.0, 1.0)`; scenario variants are analytical assumptions.
+
+## 5.2 Identify robust contribution leaders and ranking changes
+
+The analysis evaluates both contribution per package sold and contribution per included game. It also measures how the ranking of all 180 designs compares with the matching baseline accounting convention, using Spearman rank correlation. A profile's modeled contribution may change substantially without changing the identity of the top-ranked package; both effects are relevant.
+
+```{r economic-ranking-sensitivity}
+scenario_leaders <- scenario_packages |>
+  group_by(scenario_id) |>
+  arrange(desc(contribution), desc(utility), package_id, .by_group = TRUE) |>
+  slice(1) |> ungroup() |>
+  transmute(scenario_id, leader_package = package_id,
+            leader_games = games_n, leader_price = price_usd,
+            leader_utility = utility, leader_contribution = contribution)
+per_game_leaders <- scenario_packages |>
+  group_by(scenario_id) |>
+  arrange(desc(contribution_per_game), desc(utility), package_id, .by_group = TRUE) |>
+  slice(1) |> ungroup() |>
+  transmute(scenario_id, per_game_leader = package_id,
+            leader_contribution_per_game = contribution_per_game)
+scenario_rank_stats <- scenario_grid |>
+  left_join(scenario_leaders, by = "scenario_id") |>
+  left_join(per_game_leaders, by = "scenario_id")
+base_A <- packages$contribution_A
+base_B <- packages$contribution_B
+rank_correlations <- scenario_packages |>
+  group_by(scenario_id) |>
+  summarise(rank_correlation = {
+    baseline_cost <- if (first(fulfillment) == "Once per package") base_A else base_B
+    baseline_by_id <- baseline_cost[match(package_id, packages$package_id)]
+    suppressWarnings(stats::cor(contribution, baseline_by_id, method = "spearman"))
+  }, .groups = "drop")
+scenario_rank_stats <- scenario_rank_stats |>
+  left_join(rank_correlations, by = "scenario_id")
+assert(all(is.finite(scenario_rank_stats$rank_correlation)),
+       "Economic ranking correlations must be finite")
+knitr::kable(scenario_rank_stats |>
+               select(scenario_id, seat_multiplier, promo_multiplier, fulfillment,
+                      leader_package, per_game_leader, rank_correlation),
+             digits = 4, caption = "Contribution leaders and ranking stability by cost scenario")
+```
+
+**Results and interpretation.** Across the `r nrow(scenario_grid)` accounting scenarios, `r n_distinct(scenario_rank_stats$leader_package)` distinct package designs lead on contribution per package, and `r n_distinct(scenario_rank_stats$per_game_leader)` lead on contribution per game. The scenario-specific rank correlations indicate how broadly the ordering changes, beyond the identity of the winner. These comparisons concern **conditional unit economics**; the case does not provide the demand needed to optimize aggregate sales profit.
+
+## 5.3 Examine the preference leader's contribution across assumptions
+
+The highest-utility package has a fixed consumer preference score across cost scenarios, but its accounting contribution changes when cost multipliers or promotional delivery change. Tracking it explicitly connects the preference-first recommendation to the economic stress tests.
+
+```{r preference-leader-economics}
+preference_leader_economics <- scenario_packages |>
+  filter(package_id == base_winner) |>
+  select(scenario_id, seat_multiplier, promo_multiplier, fulfillment,
+         package_id, utility, revenue, seat_allocation,
+         promotion_expense, contribution, contribution_per_game)
+knitr::kable(preference_leader_economics, digits = 2,
+             caption = "Cost-scenario contribution of the baseline highest-utility design")
+p_cost <- ggplot(preference_leader_economics,
+                 aes(x = factor(seat_multiplier), y = contribution,
+                     color = factor(promo_multiplier), group = promo_multiplier)) +
+  geom_line(linewidth = 0.85) + geom_point(size = 2.4) +
+  facet_wrap(~ fulfillment) +
+  labs(title = "Contribution sensitivity of the preference-first package",
+       subtitle = "Cost multipliers are scenario assumptions; utility and selling price held fixed",
+       x = "Seat allocation multiplier", y = "Contribution per package sold (USD)",
+       color = "Promotion multiplier") + theme_minimal(base_size = 11)
+print(p_cost)
+```
+
+**Figure interpretation.** Changes in the seat allocation multiplier alter contribution in proportion to the number of games and the selected seat's reported cost. Promotion cost sensitivity is larger under per-game fulfillment for paid benefits and longer packages. These patterns follow directly from the cost formula and clarify which operational assumptions require management verification.
+
+# 6. Multiobjective robustness: Pareto-efficient designs
+
+## 6.1 Recompute the frontier under every cost scenario
+
+A package is Pareto-efficient if no other feasible design offers both greater-or-equal utility and greater-or-equal modeled contribution, with at least one strict improvement. The project recomputes the frontier separately for each economic scenario. This tests whether the same packages remain attractive when the contribution definition changes.
+
+```{r pareto-sensitivity}
+pareto_flag <- function(u, c, tolerance = 1e-9) {
+  n <- length(u)
+  vapply(seq_len(n), function(i) {
+    !any(u >= u[i] - tolerance & c >= c[i] - tolerance &
+           (u > u[i] + tolerance | c > c[i] + tolerance))
+  }, logical(1))
+}
+frontier_scenarios <- scenario_packages |>
+  group_by(scenario_id) |>
+  mutate(on_frontier = pareto_flag(utility, contribution)) |>
+  ungroup()
+frontier_summary <- frontier_scenarios |>
+  group_by(scenario_id) |>
+  summarise(frontier_size = sum(on_frontier), .groups = "drop") |>
+  left_join(scenario_grid, by = "scenario_id")
+frontier_persistence <- frontier_scenarios |>
+  group_by(package_id) |>
+  summarise(frontier_scenarios = sum(on_frontier),
+            frontier_share = mean(on_frontier), .groups = "drop") |>
+  left_join(packages |> select(package_id, games_n, price_usd, seat_id, promo_id, utility),
+            by = "package_id") |>
+  arrange(desc(frontier_share), desc(utility), package_id)
+assert(all(frontier_summary$frontier_size >= 1L), "Every scenario needs an efficient frontier")
+knitr::kable(frontier_summary |>
+               select(scenario_id, seat_multiplier, promo_multiplier,
+                      fulfillment, frontier_size),
+             caption = "Pareto-frontier size across cost assumptions")
+knitr::kable(frontier_persistence |> slice_head(n = 12), digits = 3,
+             caption = "Most frequently Pareto-efficient designs across scenarios")
+```
+
+**Results and interpretation.** The number of nondominated packages varies from `r min(frontier_summary$frontier_size)` to `r max(frontier_summary$frontier_size)` across the tested cost scenarios. A high persistence share identifies a design that repeatedly avoids dominance under the selected assumptions; it does not indicate a probability of purchase or prove universal optimality. A package outside the frontier may still serve a particular customer segment or inventory objective that the two-dimensional comparison does not model.
+
+## 6.2 Display the baseline and stressed frontiers
+
+The figure compares the reported-cost baseline with one higher-cost scenario for each fulfillment convention. It visualizes how the attainable utility–contribution boundary shifts when the economics change.
+
+```{r frontier-figure}
+selected_ids <- scenario_grid |>
+  filter((seat_multiplier == 1 & promo_multiplier == 1) |
+         (seat_multiplier == 1.2 & promo_multiplier == 1.5)) |>
+  mutate(cost_setting = if_else(seat_multiplier == 1, "Reported cost schedule",
+                                "Higher-cost stress scenario"))
+frontier_plot_data <- frontier_scenarios |>
+  inner_join(selected_ids |> select(scenario_id, cost_setting), by = "scenario_id")
+p_frontier <- ggplot(frontier_plot_data, aes(x = contribution, y = utility)) +
+  geom_point(aes(color = on_frontier), alpha = 0.65, size = 1.5) +
+  facet_grid(fulfillment ~ cost_setting, scales = "free_x") +
+  scale_color_manual(values = c("FALSE" = "#B7C2CC", "TRUE" = "#166D9A"),
+                     labels = c("FALSE" = "Other feasible", "TRUE" = "Pareto-efficient")) +
+  labs(title = "Utility–contribution frontiers under alternative cost assumptions",
+       x = "Modeled contribution per package sold (USD)",
+       y = "Aggregate systematic utility", color = "Status") +
+  theme_minimal(base_size = 10)
+print(p_frontier)
+```
+
+**Figure interpretation.** The utility coordinate of each package is unchanged in this cost-only experiment; the contribution coordinate moves as cost assumptions vary. Frontier persistence is therefore an informative way to screen robust product candidates, while the exact contribution values remain conditional on the selected accounting scenario.
+
+# 7. Decision thresholds and actionable robustness checks
+
+## 7.1 Quantify the preference leader's score margin
+
+A useful decision diagnostic is the gap between the top score and the next *distinct* score. Because each package score contains four part-worth contributions, independent bounded changes of at most $\epsilon$ to each coefficient can change a pairwise utility difference by at most $8\epsilon$. Therefore, a sufficient (conservative) condition for preserving a **strictly unique** winner is $8\epsilon$ smaller than its minimum gap to every competitor. If multiple profiles tie for first place, no positive bound can guarantee the identity of one unique winner.
+
+This is a deterministic worst-case statement, separate from the simulation's assumed distribution of coefficient shocks.
+
+```{r deterministic-utility-bound}
+top_ties <- sum(abs(packages$utility - max(packages$utility)) < 1e-10)
+minimum_gap <- if (top_ties == 1L) {
+  max(packages$utility) - max(packages$utility[packages$package_id != base_winner])
+} else 0
+conservative_epsilon <- minimum_gap / 8
+bound_summary <- data.frame(
+  metric = c("Profiles tied at the maximum utility", "Gap to next competitor",
+             "Conservative per-coefficient perturbation bound"),
+  value = c(top_ties, minimum_gap, conservative_epsilon))
+knitr::kable(bound_summary, digits = 6,
+             caption = "Deterministic preference-ranking robustness bound")
+```
+
+**Interpretation.** The baseline has `r top_ties` top-scoring profile(s). The conservative bound is `r fmt(conservative_epsilon, 6)` utility points per coefficient. This bound is intentionally cautious because it does not exploit the fact that competing packages may share several attribute levels. It is a useful check on ranking precision, not a confidence interval.
+
+## 7.2 Summarize robust choices and evidence gaps
+
+The evidence can be organized into decisions that are directly supported by the data and decisions that depend on additional information. This framework connects the model's outputs to an implementable product-testing plan.
+
+```{r decision-evidence-matrix}
+evidence_matrix <- data.frame(
+  question = c("Are the 180 profiles feasible and complete?",
+               "Are utility and contribution calculations internally consistent?",
+               "Is the preferred profile stable under specified utility shocks?",
+               "Are accounting leaders stable across assumed costs?",
+               "Which packages are efficient across economic scenarios?",
+               "What are expected purchases, market shares, and total profits?",
+               "How accurate are predictions for new consumers?"),
+  evidence = c("Independent Cartesian-product and policy audit",
+               "Independent recalculation from the 16 workbook part-worths",
+               "Controlled hypothetical coefficient-perturbation experiment",
+               "18 explicit cost and fulfillment scenarios",
+               "Scenario-specific Pareto frontiers and persistence counts",
+               "Requires purchase probabilities, inventory, and validated costs",
+               "Requires held-out respondent choices or prospective observations"),
+  status = c(rep("Evaluated in this module", 5),
+             "Additional empirical data required", "Additional empirical data required"),
+  stringsAsFactors = FALSE)
+knitr::kable(evidence_matrix, caption = "Decision evidence and validation scope")
+```
+
+**Interpretation.** The first five questions are addressed with observed model inputs and clearly labeled sensitivity assumptions. The last two require behavioral evidence beyond the supplied aggregate utility table. Keeping this boundary explicit protects the managerial conclusions from unsupported claims about conversion, sales, or generalization.
+
+# 8. Internal validation versus out-of-sample predictive validation
+
+## 8.1 What the available evidence establishes
+
+**Internal computational validation** checks whether the data transformations, feasibility restrictions, utility aggregation, cost equations, and scenario calculations agree with their definitions. This module implements those checks directly. **Sensitivity analysis** then explores how the rankings and efficient frontiers change under stated alternative inputs.
+
+**Out-of-sample predictive validation** evaluates how well a fitted choice model predicts responses that were not used to estimate it. For this conjoint setting, that would require respondent-level choice-task records or a prospective experiment, including the actual choice sets and selected alternatives. Those records are not present in the project workbook. Consequently, the project does not report an out-of-sample hit rate, log loss, predictive likelihood, calibration curve, respondent-level bootstrap confidence interval, or cross-validated market-share estimate.
+
+The observed 204 valid responses and 20 tasks per respondent describe the study's data collection; they do not supply a usable holdout dataset in the available materials.
+
+## 8.2 A future empirical validation protocol
+
+With respondent-level choice data, the project could group observations by respondent and create **respondent-disjoint training and test partitions** to assess generalization to new consumers. Within the training set, a choice model could be fitted using the observed choice sets, with tuning performed without access to the test respondents. The held-out test set would then support appropriate metrics, such as choice prediction accuracy and multiclass log loss, conditional on the estimated model and choice-set design.
+
+If the business goal is to forecast actual package purchases, a separate prospective offer test would additionally need an **outside option**, observed sales or acceptance decisions, and representative deployment conditions. The test should record price, inventory, package content, promotion fulfillment, and potential cannibalization of existing ticket products. Only such evidence could support demand-weighted revenue and profit decisions.
+
+```{r validation-status}
+validation_status <- data.frame(
+  validation_type = c("Input structure and provenance", "Independent score recalculation",
+                      "Feasibility-set completeness", "Cost scenario identities",
+                      "Hypothetical utility sensitivity", "Cost and Pareto sensitivity",
+                      "Respondent-level holdout accuracy", "Prospective sales validation"),
+  available_now = c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE),
+  interpretation = c("Workbook-derived attribute-level inputs",
+                     "Arithmetic consistency", "Exhaustive discrete design audit",
+                     "Accounting consistency under assumptions",
+                     "Conditional ranking stability", "Conditional economic robustness",
+                     "Requires raw choices and choice sets", "Requires observed purchase outcomes"))
+knitr::kable(validation_status, caption = "Validation evidence available for the project")
+```
+
+**Interpretation.** The status table separates validated calculations from predictive questions that require new evidence. This allows the project to make useful recommendations for screening ticket packages while presenting the empirical limits of the available conjoint inputs accurately.
+
+# 9. Final audit, exports, and reproducibility
+
+## 9.1 Check the analytical results before saving
+
+The final audit verifies the original design size, independent score agreement, complete scenario grids, and finite robustness statistics. The validation checks remain explicit so that a future change to the input workbook or upstream modules fails visibly rather than silently changing the report.
+
+```{r final-audit}
+final_checks <- data.frame(
+  check = c("Exactly 16 unique attribute levels",
+            "Exactly 180 unique feasible package profiles",
+            "Independent feasibility enumeration agrees",
+            "All independent arithmetic differences below tolerance",
+            "Utility design matrix reproduces package scores",
+            "Utility stress experiments have complete iteration counts",
+            "Economic scenario grid covers all packages",
+            "Each economic scenario has a Pareto frontier",
+            "All summary stability statistics are finite"),
+  passed = c(
+    nrow(partworth) == 16L && !anyDuplicated(partworth[c("attribute", "level_id")]),
+    nrow(packages) == 180L && !anyDuplicated(packages$package_id),
+    nrow(missing_keys) == 0L && nrow(extra_keys) == 0L,
+    all(audit_summary$maximum_absolute_difference < 1e-8),
+    max(abs(as.vector(X %*% coefficients) - packages$utility)) < 1e-8,
+    nrow(simulation_results) == iterations * length(perturbation_levels),
+    nrow(scenario_packages) == nrow(packages) * nrow(scenario_grid),
+    all(frontier_summary$frontier_size > 0),
+    all(is.finite(unlist(stability_summary[, c("winner_retention_rate",
+                "mean_rank_correlation", "median_top10_overlap")])))))
+assert(all(final_checks$passed), "At least one Module 5 internal validation check failed")
+knitr::kable(final_checks, caption = "Final reproducibility and internal validation checks")
+```
+
+**Interpretation.** All `r nrow(final_checks)` final checks pass when the inputs and transformations remain consistent. The checks document computational reproducibility; they do not turn the scenario experiments into statistically estimated uncertainty or observed purchase outcomes.
+
+## 9.2 Export research tables and figures
+
+The tables below preserve the package-level audit, baseline ranking, simulated stability results, cost scenarios, frontier persistence, and validation scope. The simulation outputs include the fixed-seed scenario identifiers so that conclusions can be revisited when additional preference or cost evidence becomes available.
+
+```{r export-results}
+save_table(input_summary, "05_input_inventory.csv")
+save_table(audit_summary, "05_independent_arithmetic_audit.csv")
+save_table(feasibility_audit, "05_feasibility_audit.csv")
+save_table(top_table, "05_baseline_utility_rankings.csv")
+save_table(baseline_leaders, "05_baseline_objective_leaders.csv")
+save_table(stability_summary, "05_utility_ranking_stability_summary.csv")
+save_table(simulation_results, "05_utility_perturbation_scenarios.csv")
+save_table(winner_frequency, "05_winner_frequency.csv")
+save_table(scenario_rank_stats, "05_cost_scenario_leaders.csv")
+save_table(preference_leader_economics, "05_preference_leader_cost_sensitivity.csv")
+save_table(frontier_summary, "05_pareto_scenario_summary.csv")
+save_table(frontier_persistence, "05_pareto_persistence.csv")
+save_table(bound_summary, "05_deterministic_ranking_bound.csv")
+save_table(evidence_matrix, "05_decision_evidence_matrix.csv")
+save_table(validation_status, "05_validation_status.csv")
+save_table(final_checks, "05_internal_validation_checks.csv")
+save_figure(p_stability, "05_utility_ranking_stability.png", 9, 5.5)
+save_figure(p_cost, "05_preference_leader_cost_sensitivity.png", 10, 5.5)
+save_figure(p_frontier, "05_pareto_cost_sensitivity.png", 11, 6.5)
+export_manifest <- data.frame(
+  type = c(rep("CSV", 16), rep("PNG", 3)),
+  filename = c("05_input_inventory.csv", "05_independent_arithmetic_audit.csv",
+    "05_feasibility_audit.csv", "05_baseline_utility_rankings.csv",
+    "05_baseline_objective_leaders.csv", "05_utility_ranking_stability_summary.csv",
+    "05_utility_perturbation_scenarios.csv", "05_winner_frequency.csv",
+    "05_cost_scenario_leaders.csv", "05_preference_leader_cost_sensitivity.csv",
+    "05_pareto_scenario_summary.csv", "05_pareto_persistence.csv",
+    "05_deterministic_ranking_bound.csv", "05_decision_evidence_matrix.csv",
+    "05_validation_status.csv", "05_internal_validation_checks.csv",
+    "05_utility_ranking_stability.png", "05_preference_leader_cost_sensitivity.png",
+    "05_pareto_cost_sensitivity.png"))
+knitr::kable(export_manifest, caption = "Module 5 research artifacts")
+```
+
+# 10. Research conclusions and managerial implications
+
+The model-validation analysis provides three layers of evidence. First, independent calculations confirm the relationship between the 16 source part-worths, the 180 permitted package profiles, and the two accounting-contribution measures. Second, utility-perturbation experiments characterize the sensitivity of the preferred profile and the wider product shortlist to explicitly assumed changes in the estimated preferences. Third, alternative cost and fulfillment scenarios show how financial rankings and Pareto-efficient designs depend on seat allocations and promotional delivery conventions.
+
+The central managerial lesson is to **treat the preference winner as a strong candidate rather than a definitive commercial optimum**. Management can use stable high-utility profiles and repeatedly efficient designs to construct a focused shortlist, then confirm promotional delivery costs, available seat inventory, and the strategic value of six-game packages. Where rankings are sensitive, testing multiple offers is more defensible than relying on a single point estimate.
+
+The available evidence supports transparent **product screening, constrained comparison, and scenario-based decision support**. Forecasting demand, validating choice probabilities for new consumers, and identifying a true profit-maximizing package require respondent-level choice data or observed market responses. These next steps connect the conjoint analysis to an empirically testable ticketing strategy.
+
+# References and data provenance
+
+- Wilcox, Ronald T. *Portland Trail Blazers*. Darden Business Publishing, case UV2971. Case context, attributes, seat-price restrictions, managerial objectives, and cost schedules.
+- Xiang, Keman. *Portland Trail Blazers_Keman_Xiang.xlsx*. `Table 1. Utility score data.` and `Product Analysis` provide the numerical inputs; `Willingness to pay` and `Attribute Tradeoff` provide analytical context.
+- Xiang, Keman. *Assignment 3*. Attribute importance, price trade-offs, and promotional valuation.
+- Xiang, Keman. *Portland Trail Blazers: Conjoint Analysis*, Modules 1–4. Validated part-worth inputs, utility and WTP analysis, and feasible-package economic results.

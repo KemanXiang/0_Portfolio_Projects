@@ -1,0 +1,13 @@
+"group","attribute","from_id","to_id","from_level","to_level","delta_utility"
+"Games","Number of Games",1,2,"3","6",0.21126
+"Games","Number of Games",3,1,"10","3",0.30897
+"Games","Number of Games",3,2,"10","6",0.52023
+"Seating","Ticket Location",1,2,"300 level, behind the baskets","300 level, on the corners",0.29453
+"Seating","Ticket Location",1,3,"300 level, behind the baskets","300 level, midcourt",0.88905
+"Seating","Ticket Location",1,4,"300 level, behind the baskets","200 level, midcourt",1.74317
+"Seating","Ticket Location",2,3,"300 level, on the corners","300 level, midcourt",0.59452
+"Seating","Ticket Location",3,4,"300 level, midcourt","200 level, midcourt",0.85412
+"Promotions","Promotional Item",5,1,"No promotional item","Priority for home playoff tickets",0.44297
+"Promotions","Promotional Item",5,2,"No promotional item","Hot dog and soda with each ticket",0.49214
+"Promotions","Promotional Item",5,3,"No promotional item","Trail Blazer apparel (hat, jersey, etc.)",0.31944
+"Promotions","Promotional Item",5,4,"No promotional item","$20 gift certificate for popular local restaurant",0.33475

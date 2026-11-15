@@ -1,0 +1,8 @@
+"check","passed"
+"Price utility matches all four source levels",TRUE
+"Interpolated price utility is monotonically decreasing",TRUE
+"Local price slopes are strictly negative",TRUE
+"Piecewise WTP satisfies compensating utility equation",TRUE
+"All promotion utility increments are nonnegative",TRUE
+"All reported promotional costs are nonnegative",TRUE
+"Seat-price reference comparisons remain feasible",TRUE

@@ -1,0 +1,4 @@
+"scenario","games_level","price_level","seat_level","promo_level","total_utility"
+"Highest feasible utility","6","25","300 level, midcourt","Hot dog and soda with each ticket",0.79558
+"Highest utility without promotion","6","25","300 level, midcourt","No promotional item",0.30344
+"Highest utility at $60","6","60","200 level, midcourt","Hot dog and soda with each ticket",0.42702

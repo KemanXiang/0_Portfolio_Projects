@@ -1,0 +1,6 @@
+"objective","package_id","games_n","price_usd","seat_id","promo_id","utility","contribution_A","contribution_B","contribution_A_per_game","contribution_B_per_game"
+"utility","PKG077",6,25,3,2,0.79558,38.75,22.5,6.45833333333333,3.75
+"contribution_A","PKG012",10,60,1,1,-1.88555,500,500,50,50
+"contribution_B","PKG012",10,60,1,1,-1.88555,500,500,50,50
+"contribution_A_per_game","PKG011",6,60,1,1,-1.36532,300,300,50,50
+"contribution_B_per_game","PKG011",6,60,1,1,-1.36532,300,300,50,50

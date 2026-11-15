@@ -1,0 +1,19 @@
+"seat_multiplier","promo_multiplier","fulfillment","scenario_id","leader_package","leader_games","leader_price","leader_utility","leader_contribution","per_game_leader","leader_contribution_per_game","rank_correlation"
+0.8,0.5,"Once per package","SC01","PKG012",10,60,-1.88555,520,"PKG011",52,0.986617594619304
+0.8,0.5,"Once per game","SC02","PKG012",10,60,-1.88555,520,"PKG011",52,0.963849727597045
+0.8,1,"Once per package","SC03","PKG012",10,60,-1.88555,520,"PKG011",52,0.988093579752786
+0.8,1,"Once per game","SC04","PKG012",10,60,-1.88555,520,"PKG011",52,0.989820674926456
+0.8,1.5,"Once per package","SC05","PKG012",10,60,-1.88555,520,"PKG011",52,0.988701206038432
+0.8,1.5,"Once per game","SC06","PKG012",10,60,-1.88555,520,"PKG011",52,0.982742218986112
+1,0.5,"Once per package","SC07","PKG012",10,60,-1.88555,500,"PKG011",50,0.999075451332481
+1,0.5,"Once per game","SC08","PKG012",10,60,-1.88555,500,"PKG011",50,0.978172805493911
+1,1,"Once per package","SC09","PKG012",10,60,-1.88555,500,"PKG011",50,1
+1,1,"Once per game","SC10","PKG012",10,60,-1.88555,500,"PKG011",50,1
+1,1.5,"Once per package","SC11","PKG012",10,60,-1.88555,500,"PKG011",50,0.999319833595515
+1,1.5,"Once per game","SC12","PKG012",10,60,-1.88555,500,"PKG011",50,0.978186273858852
+1.2,0.5,"Once per package","SC13","PKG012",10,60,-1.88555,480,"PKG011",48,0.983458694442797
+1.2,0.5,"Once per game","SC14","PKG012",10,60,-1.88555,480,"PKG011",48,0.971969819568045
+1.2,1,"Once per package","SC15","PKG012",10,60,-1.88555,480,"PKG011",48,0.985343198180939
+1.2,1,"Once per game","SC16","PKG012",10,60,-1.88555,480,"PKG011",48,0.980555459857748
+1.2,1.5,"Once per package","SC17","PKG012",10,60,-1.88555,480,"PKG011",48,0.984698595904925
+1.2,1.5,"Once per game","SC18","PKG012",10,60,-1.88555,480,"PKG011",48,0.950492552336522

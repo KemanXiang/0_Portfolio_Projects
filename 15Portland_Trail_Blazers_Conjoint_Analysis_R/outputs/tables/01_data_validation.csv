@@ -1,0 +1,13 @@
+"test","passed"
+"Expected source sheets present",TRUE
+"Four attributes and 16 levels",TRUE
+"Expected number of levels per attribute",TRUE
+"No missing or non-finite utilities",TRUE
+"Unique attribute/level labels",TRUE
+"One-to-one alignment across source sheets",TRUE
+"Game counts: 3, 6, 10",TRUE
+"Ticket prices: 15, 25, 35, 60",TRUE
+"Price utility decreases with price",TRUE
+"Seat and promotion costs are nonnegative and complete",TRUE
+"No cost entries assigned to game-count or ticket-price levels",TRUE
+"Attribute-level utility sums approximately zero",TRUE

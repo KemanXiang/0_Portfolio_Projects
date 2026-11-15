@@ -1,0 +1,7 @@
+"conclusion","evidence_type","supporting_module"
+"Seat and price are the dominant modeled attributes","Workbook-derived","02"
+"Price sensitivity varies by interval","Workbook-derived","03"
+"Promotion value depends on the cost and price reference","Workbook-derived plus accounting assumptions","03"
+"The optimal offer depends on the objective","Deterministic model implication","04"
+"Cost assumptions can change the accounting decision","Assumption-based sensitivity","05"
+"Market demand and realized profit require field evidence","Empirical evidence gap","05–06"

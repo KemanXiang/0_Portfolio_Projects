@@ -1,0 +1,5 @@
+"seat_id","price_usd","seat","seat_utility","price_utility","combined_utility"
+3,35,"300 level, midcourt",0.15736,0.126,0.28336
+4,60,"200 level, midcourt",1.01148,-1.00257,0.00890999999999997
+1,15,"300 level, behind the baskets",-0.73169,0.65646,-0.0752299999999999
+2,25,"300 level, on the corners",-0.43716,0.22011,-0.21705

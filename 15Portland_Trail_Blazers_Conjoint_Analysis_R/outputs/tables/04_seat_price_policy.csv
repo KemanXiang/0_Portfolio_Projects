@@ -1,0 +1,17 @@
+"seat_id","seat_label","price_usd","feasible"
+1,"300 level, behind the baskets",15,TRUE
+1,"300 level, behind the baskets",25,TRUE
+1,"300 level, behind the baskets",35,TRUE
+1,"300 level, behind the baskets",60,TRUE
+2,"300 level, on the corners",15,TRUE
+2,"300 level, on the corners",25,TRUE
+2,"300 level, on the corners",35,TRUE
+2,"300 level, on the corners",60,TRUE
+3,"300 level, midcourt",15,FALSE
+3,"300 level, midcourt",25,TRUE
+3,"300 level, midcourt",35,TRUE
+3,"300 level, midcourt",60,TRUE
+4,"200 level, midcourt",15,FALSE
+4,"200 level, midcourt",25,FALSE
+4,"200 level, midcourt",35,FALSE
+4,"200 level, midcourt",60,TRUE

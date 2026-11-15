@@ -1,0 +1,7 @@
+"attribute","from_id","to_id","from_level","to_level","from_utility","to_utility","delta_utility"
+"Number of Games",1,2,"3","6",0.03257,0.24383,0.21126
+"Number of Games",2,3,"6","10",0.24383,-0.2764,-0.52023
+"Ticket Price",2,1,"25","15",0.22011,0.65646,0.43635
+"Ticket Price",4,3,"60","35",-1.00257,0.126,1.12857
+"Ticket Location",1,4,"300 level, behind the baskets","200 level, midcourt",-0.73169,1.01148,1.74317
+"Promotional Item",5,2,"No promotional item","Hot dog and soda with each ticket",-0.31786,0.17428,0.49214

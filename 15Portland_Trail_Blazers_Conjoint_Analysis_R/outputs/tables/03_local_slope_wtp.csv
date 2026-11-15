@@ -1,0 +1,37 @@
+"group","attribute","from_id","to_id","from_level","to_level","delta_utility","interval","price_from","price_to","slope_utility_per_usd","wtp_local_usd","within_interval_width"
+"Games","Number of Games",1,2,"3","6",0.21126,"$15–$25",15,25,-0.043635,4.8415262976968,TRUE
+"Games","Number of Games",1,2,"3","6",0.21126,"$25–$35",25,35,-0.009411,22.4481989161619,FALSE
+"Games","Number of Games",1,2,"3","6",0.21126,"$35–$60",35,60,-0.0451428,4.67981605040006,TRUE
+"Games","Number of Games",3,1,"10","3",0.30897,"$15–$25",15,25,-0.043635,7.08078377449295,TRUE
+"Games","Number of Games",3,1,"10","3",0.30897,"$25–$35",25,35,-0.009411,32.8307299968122,FALSE
+"Games","Number of Games",3,1,"10","3",0.30897,"$35–$60",35,60,-0.0451428,6.84428081554534,TRUE
+"Games","Number of Games",3,2,"10","6",0.52023,"$15–$25",15,25,-0.043635,11.9223100721898,FALSE
+"Games","Number of Games",3,2,"10","6",0.52023,"$25–$35",25,35,-0.009411,55.2789289129742,FALSE
+"Games","Number of Games",3,2,"10","6",0.52023,"$35–$60",35,60,-0.0451428,11.5240968659454,TRUE
+"Promotions","Promotional Item",5,1,"No promotional item","Priority for home playoff tickets",0.44297,"$15–$25",15,25,-0.043635,10.1517130743669,FALSE
+"Promotions","Promotional Item",5,1,"No promotional item","Priority for home playoff tickets",0.44297,"$25–$35",25,35,-0.009411,47.0693868876846,FALSE
+"Promotions","Promotional Item",5,1,"No promotional item","Priority for home playoff tickets",0.44297,"$35–$60",35,60,-0.0451428,9.81263900334051,TRUE
+"Promotions","Promotional Item",5,2,"No promotional item","Hot dog and soda with each ticket",0.49214,"$15–$25",15,25,-0.043635,11.278560788358,FALSE
+"Promotions","Promotional Item",5,2,"No promotional item","Hot dog and soda with each ticket",0.49214,"$25–$35",25,35,-0.009411,52.2941238975667,FALSE
+"Promotions","Promotional Item",5,2,"No promotional item","Hot dog and soda with each ticket",0.49214,"$35–$60",35,60,-0.0451428,10.9018492428471,TRUE
+"Promotions","Promotional Item",5,3,"No promotional item","Trail Blazer apparel (hat, jersey, etc.)",0.31944,"$15–$25",15,25,-0.043635,7.32072877277415,TRUE
+"Promotions","Promotional Item",5,3,"No promotional item","Trail Blazer apparel (hat, jersey, etc.)",0.31944,"$25–$35",25,35,-0.009411,33.9432578897035,FALSE
+"Promotions","Promotional Item",5,3,"No promotional item","Trail Blazer apparel (hat, jersey, etc.)",0.31944,"$35–$60",35,60,-0.0451428,7.0762114888753,TRUE
+"Promotions","Promotional Item",5,4,"No promotional item","$20 gift certificate for popular local restaurant",0.33475,"$15–$25",15,25,-0.043635,7.67159390397617,TRUE
+"Promotions","Promotional Item",5,4,"No promotional item","$20 gift certificate for popular local restaurant",0.33475,"$25–$35",25,35,-0.009411,35.5700775688025,FALSE
+"Promotions","Promotional Item",5,4,"No promotional item","$20 gift certificate for popular local restaurant",0.33475,"$35–$60",35,60,-0.0451428,7.41535748779429,TRUE
+"Seating","Ticket Location",1,2,"300 level, behind the baskets","300 level, on the corners",0.29453,"$15–$25",15,25,-0.043635,6.74985676635728,TRUE
+"Seating","Ticket Location",1,2,"300 level, behind the baskets","300 level, on the corners",0.29453,"$25–$35",25,35,-0.009411,31.2963553288705,FALSE
+"Seating","Ticket Location",1,2,"300 level, behind the baskets","300 level, on the corners",0.29453,"$35–$60",35,60,-0.0451428,6.52440699292024,TRUE
+"Seating","Ticket Location",1,3,"300 level, behind the baskets","300 level, midcourt",0.88905,"$15–$25",15,25,-0.043635,20.3746992093503,FALSE
+"Seating","Ticket Location",1,3,"300 level, behind the baskets","300 level, midcourt",0.88905,"$25–$35",25,35,-0.009411,94.4692381255977,FALSE
+"Seating","Ticket Location",1,3,"300 level, behind the baskets","300 level, midcourt",0.88905,"$35–$60",35,60,-0.0451428,19.69417049895,TRUE
+"Seating","Ticket Location",1,4,"300 level, behind the baskets","200 level, midcourt",1.74317,"$15–$25",15,25,-0.043635,39.9488942362782,FALSE
+"Seating","Ticket Location",1,4,"300 level, behind the baskets","200 level, midcourt",1.74317,"$25–$35",25,35,-0.009411,185.226862182552,FALSE
+"Seating","Ticket Location",1,4,"300 level, behind the baskets","200 level, midcourt",1.74317,"$35–$60",35,60,-0.0451428,38.6145741956635,FALSE
+"Seating","Ticket Location",2,3,"300 level, on the corners","300 level, midcourt",0.59452,"$15–$25",15,25,-0.043635,13.624842442993,FALSE
+"Seating","Ticket Location",2,3,"300 level, on the corners","300 level, midcourt",0.59452,"$25–$35",25,35,-0.009411,63.1728827967272,FALSE
+"Seating","Ticket Location",2,3,"300 level, on the corners","300 level, midcourt",0.59452,"$35–$60",35,60,-0.0451428,13.1697635060298,TRUE
+"Seating","Ticket Location",3,4,"300 level, midcourt","200 level, midcourt",0.85412,"$15–$25",15,25,-0.043635,19.5741950269279,FALSE
+"Seating","Ticket Location",3,4,"300 level, midcourt","200 level, midcourt",0.85412,"$25–$35",25,35,-0.009411,90.7576240569546,FALSE
+"Seating","Ticket Location",3,4,"300 level, midcourt","200 level, midcourt",0.85412,"$35–$60",35,60,-0.0451428,18.9204036967135,TRUE

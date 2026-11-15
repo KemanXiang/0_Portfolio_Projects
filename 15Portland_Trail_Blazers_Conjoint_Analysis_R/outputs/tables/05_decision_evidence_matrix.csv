@@ -1,0 +1,8 @@
+"question","evidence","status"
+"Are the 180 profiles feasible and complete?","Independent Cartesian-product and policy audit","Evaluated in this module"
+"Are utility and contribution calculations internally consistent?","Independent recalculation from the 16 workbook part-worths","Evaluated in this module"
+"Is the preferred profile stable under specified utility shocks?","Controlled hypothetical coefficient-perturbation experiment","Evaluated in this module"
+"Are accounting leaders stable across assumed costs?","18 explicit cost and fulfillment scenarios","Evaluated in this module"
+"Which packages are efficient across economic scenarios?","Scenario-specific Pareto frontiers and persistence counts","Evaluated in this module"
+"What are expected purchases, market shares, and total profits?","Requires purchase probabilities, inventory, and validated costs","Additional empirical data required"
+"How accurate are predictions for new consumers?","Requires held-out respondent choices or prospective observations","Additional empirical data required"

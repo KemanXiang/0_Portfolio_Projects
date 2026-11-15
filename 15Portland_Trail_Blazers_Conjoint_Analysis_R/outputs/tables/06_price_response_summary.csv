@@ -1,0 +1,4 @@
+"higher_price","lower_price","utility_gain_from_reduction","price_reduction_usd","utility_gain_per_dollar"
+25,15,0.43635,10,0.043635
+35,25,0.09411,10,0.009411
+60,35,1.12857,25,0.0451428

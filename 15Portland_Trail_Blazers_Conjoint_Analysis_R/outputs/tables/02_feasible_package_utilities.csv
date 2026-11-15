@@ -1,0 +1,181 @@
+"games_id","games_level","games_utility","price_id","price_level","price_utility","seat_id","seat_level","seat_utility","promo_id","promo_level","promo_utility","games","price_usd","feasible","total_utility"
+1,"3",0.03257,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,3,15,TRUE,0.0824500000000001
+1,"3",0.03257,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,3,15,TRUE,0.13162
+1,"3",0.03257,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,15,TRUE,-0.0410799999999999
+1,"3",0.03257,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,3,15,TRUE,-0.0257699999999999
+1,"3",0.03257,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,3,15,TRUE,-0.36052
+1,"3",0.03257,1,"15",0.65646,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,3,15,TRUE,0.37698
+1,"3",0.03257,1,"15",0.65646,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,3,15,TRUE,0.42615
+1,"3",0.03257,1,"15",0.65646,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,15,TRUE,0.25345
+1,"3",0.03257,1,"15",0.65646,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,3,15,TRUE,0.26876
+1,"3",0.03257,1,"15",0.65646,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,3,15,TRUE,-0.0659899999999999
+1,"3",0.03257,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,3,25,TRUE,-0.3539
+1,"3",0.03257,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,3,25,TRUE,-0.30473
+1,"3",0.03257,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,25,TRUE,-0.47743
+1,"3",0.03257,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,3,25,TRUE,-0.46212
+1,"3",0.03257,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,3,25,TRUE,-0.79687
+1,"3",0.03257,2,"25",0.22011,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,3,25,TRUE,-0.05937
+1,"3",0.03257,2,"25",0.22011,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,3,25,TRUE,-0.0102
+1,"3",0.03257,2,"25",0.22011,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,25,TRUE,-0.1829
+1,"3",0.03257,2,"25",0.22011,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,3,25,TRUE,-0.16759
+1,"3",0.03257,2,"25",0.22011,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,3,25,TRUE,-0.50234
+1,"3",0.03257,2,"25",0.22011,3,"300 level, midcourt",0.15736,1,"Priority for home playoff tickets",0.12511,3,25,TRUE,0.53515
+1,"3",0.03257,2,"25",0.22011,3,"300 level, midcourt",0.15736,2,"Hot dog and soda with each ticket",0.17428,3,25,TRUE,0.58432
+1,"3",0.03257,2,"25",0.22011,3,"300 level, midcourt",0.15736,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,25,TRUE,0.41162
+1,"3",0.03257,2,"25",0.22011,3,"300 level, midcourt",0.15736,4,"$20 gift certificate for popular local restaurant",0.01689,3,25,TRUE,0.42693
+1,"3",0.03257,2,"25",0.22011,3,"300 level, midcourt",0.15736,5,"No promotional item",-0.31786,3,25,TRUE,0.09218
+1,"3",0.03257,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,3,35,TRUE,-0.44801
+1,"3",0.03257,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,3,35,TRUE,-0.39884
+1,"3",0.03257,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,35,TRUE,-0.57154
+1,"3",0.03257,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,3,35,TRUE,-0.55623
+1,"3",0.03257,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,3,35,TRUE,-0.89098
+1,"3",0.03257,3,"35",0.126,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,3,35,TRUE,-0.15348
+1,"3",0.03257,3,"35",0.126,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,3,35,TRUE,-0.10431
+1,"3",0.03257,3,"35",0.126,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,35,TRUE,-0.27701
+1,"3",0.03257,3,"35",0.126,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,3,35,TRUE,-0.2617
+1,"3",0.03257,3,"35",0.126,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,3,35,TRUE,-0.59645
+1,"3",0.03257,3,"35",0.126,3,"300 level, midcourt",0.15736,1,"Priority for home playoff tickets",0.12511,3,35,TRUE,0.44104
+1,"3",0.03257,3,"35",0.126,3,"300 level, midcourt",0.15736,2,"Hot dog and soda with each ticket",0.17428,3,35,TRUE,0.49021
+1,"3",0.03257,3,"35",0.126,3,"300 level, midcourt",0.15736,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,35,TRUE,0.31751
+1,"3",0.03257,3,"35",0.126,3,"300 level, midcourt",0.15736,4,"$20 gift certificate for popular local restaurant",0.01689,3,35,TRUE,0.33282
+1,"3",0.03257,3,"35",0.126,3,"300 level, midcourt",0.15736,5,"No promotional item",-0.31786,3,35,TRUE,-0.00192999999999999
+1,"3",0.03257,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,3,60,TRUE,-1.57658
+1,"3",0.03257,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,3,60,TRUE,-1.52741
+1,"3",0.03257,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,60,TRUE,-1.70011
+1,"3",0.03257,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,3,60,TRUE,-1.6848
+1,"3",0.03257,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,3,60,TRUE,-2.01955
+1,"3",0.03257,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,3,60,TRUE,-1.28205
+1,"3",0.03257,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,3,60,TRUE,-1.23288
+1,"3",0.03257,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,60,TRUE,-1.40558
+1,"3",0.03257,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,3,60,TRUE,-1.39027
+1,"3",0.03257,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,3,60,TRUE,-1.72502
+1,"3",0.03257,4,"60",-1.00257,3,"300 level, midcourt",0.15736,1,"Priority for home playoff tickets",0.12511,3,60,TRUE,-0.68753
+1,"3",0.03257,4,"60",-1.00257,3,"300 level, midcourt",0.15736,2,"Hot dog and soda with each ticket",0.17428,3,60,TRUE,-0.63836
+1,"3",0.03257,4,"60",-1.00257,3,"300 level, midcourt",0.15736,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,60,TRUE,-0.81106
+1,"3",0.03257,4,"60",-1.00257,3,"300 level, midcourt",0.15736,4,"$20 gift certificate for popular local restaurant",0.01689,3,60,TRUE,-0.79575
+1,"3",0.03257,4,"60",-1.00257,3,"300 level, midcourt",0.15736,5,"No promotional item",-0.31786,3,60,TRUE,-1.1305
+1,"3",0.03257,4,"60",-1.00257,4,"200 level, midcourt",1.01148,1,"Priority for home playoff tickets",0.12511,3,60,TRUE,0.16659
+1,"3",0.03257,4,"60",-1.00257,4,"200 level, midcourt",1.01148,2,"Hot dog and soda with each ticket",0.17428,3,60,TRUE,0.21576
+1,"3",0.03257,4,"60",-1.00257,4,"200 level, midcourt",1.01148,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,3,60,TRUE,0.04306
+1,"3",0.03257,4,"60",-1.00257,4,"200 level, midcourt",1.01148,4,"$20 gift certificate for popular local restaurant",0.01689,3,60,TRUE,0.05837
+1,"3",0.03257,4,"60",-1.00257,4,"200 level, midcourt",1.01148,5,"No promotional item",-0.31786,3,60,TRUE,-0.27638
+2,"6",0.24383,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,6,15,TRUE,0.29371
+2,"6",0.24383,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,6,15,TRUE,0.34288
+2,"6",0.24383,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,15,TRUE,0.17018
+2,"6",0.24383,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,6,15,TRUE,0.18549
+2,"6",0.24383,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,6,15,TRUE,-0.14926
+2,"6",0.24383,1,"15",0.65646,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,6,15,TRUE,0.58824
+2,"6",0.24383,1,"15",0.65646,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,6,15,TRUE,0.63741
+2,"6",0.24383,1,"15",0.65646,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,15,TRUE,0.46471
+2,"6",0.24383,1,"15",0.65646,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,6,15,TRUE,0.48002
+2,"6",0.24383,1,"15",0.65646,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,6,15,TRUE,0.14527
+2,"6",0.24383,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,6,25,TRUE,-0.14264
+2,"6",0.24383,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,6,25,TRUE,-0.0934699999999999
+2,"6",0.24383,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,25,TRUE,-0.26617
+2,"6",0.24383,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,6,25,TRUE,-0.25086
+2,"6",0.24383,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,6,25,TRUE,-0.58561
+2,"6",0.24383,2,"25",0.22011,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,6,25,TRUE,0.15189
+2,"6",0.24383,2,"25",0.22011,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,6,25,TRUE,0.20106
+2,"6",0.24383,2,"25",0.22011,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,25,TRUE,0.02836
+2,"6",0.24383,2,"25",0.22011,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,6,25,TRUE,0.04367
+2,"6",0.24383,2,"25",0.22011,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,6,25,TRUE,-0.29108
+2,"6",0.24383,2,"25",0.22011,3,"300 level, midcourt",0.15736,1,"Priority for home playoff tickets",0.12511,6,25,TRUE,0.74641
+2,"6",0.24383,2,"25",0.22011,3,"300 level, midcourt",0.15736,2,"Hot dog and soda with each ticket",0.17428,6,25,TRUE,0.79558
+2,"6",0.24383,2,"25",0.22011,3,"300 level, midcourt",0.15736,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,25,TRUE,0.62288
+2,"6",0.24383,2,"25",0.22011,3,"300 level, midcourt",0.15736,4,"$20 gift certificate for popular local restaurant",0.01689,6,25,TRUE,0.63819
+2,"6",0.24383,2,"25",0.22011,3,"300 level, midcourt",0.15736,5,"No promotional item",-0.31786,6,25,TRUE,0.30344
+2,"6",0.24383,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,6,35,TRUE,-0.23675
+2,"6",0.24383,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,6,35,TRUE,-0.18758
+2,"6",0.24383,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,35,TRUE,-0.36028
+2,"6",0.24383,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,6,35,TRUE,-0.34497
+2,"6",0.24383,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,6,35,TRUE,-0.67972
+2,"6",0.24383,3,"35",0.126,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,6,35,TRUE,0.05778
+2,"6",0.24383,3,"35",0.126,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,6,35,TRUE,0.10695
+2,"6",0.24383,3,"35",0.126,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,35,TRUE,-0.06575
+2,"6",0.24383,3,"35",0.126,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,6,35,TRUE,-0.05044
+2,"6",0.24383,3,"35",0.126,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,6,35,TRUE,-0.38519
+2,"6",0.24383,3,"35",0.126,3,"300 level, midcourt",0.15736,1,"Priority for home playoff tickets",0.12511,6,35,TRUE,0.6523
+2,"6",0.24383,3,"35",0.126,3,"300 level, midcourt",0.15736,2,"Hot dog and soda with each ticket",0.17428,6,35,TRUE,0.70147
+2,"6",0.24383,3,"35",0.126,3,"300 level, midcourt",0.15736,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,35,TRUE,0.52877
+2,"6",0.24383,3,"35",0.126,3,"300 level, midcourt",0.15736,4,"$20 gift certificate for popular local restaurant",0.01689,6,35,TRUE,0.54408
+2,"6",0.24383,3,"35",0.126,3,"300 level, midcourt",0.15736,5,"No promotional item",-0.31786,6,35,TRUE,0.20933
+2,"6",0.24383,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,6,60,TRUE,-1.36532
+2,"6",0.24383,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,6,60,TRUE,-1.31615
+2,"6",0.24383,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,60,TRUE,-1.48885
+2,"6",0.24383,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,6,60,TRUE,-1.47354
+2,"6",0.24383,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,6,60,TRUE,-1.80829
+2,"6",0.24383,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,6,60,TRUE,-1.07079
+2,"6",0.24383,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,6,60,TRUE,-1.02162
+2,"6",0.24383,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,60,TRUE,-1.19432
+2,"6",0.24383,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,6,60,TRUE,-1.17901
+2,"6",0.24383,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,6,60,TRUE,-1.51376
+2,"6",0.24383,4,"60",-1.00257,3,"300 level, midcourt",0.15736,1,"Priority for home playoff tickets",0.12511,6,60,TRUE,-0.47627
+2,"6",0.24383,4,"60",-1.00257,3,"300 level, midcourt",0.15736,2,"Hot dog and soda with each ticket",0.17428,6,60,TRUE,-0.4271
+2,"6",0.24383,4,"60",-1.00257,3,"300 level, midcourt",0.15736,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,60,TRUE,-0.5998
+2,"6",0.24383,4,"60",-1.00257,3,"300 level, midcourt",0.15736,4,"$20 gift certificate for popular local restaurant",0.01689,6,60,TRUE,-0.58449
+2,"6",0.24383,4,"60",-1.00257,3,"300 level, midcourt",0.15736,5,"No promotional item",-0.31786,6,60,TRUE,-0.91924
+2,"6",0.24383,4,"60",-1.00257,4,"200 level, midcourt",1.01148,1,"Priority for home playoff tickets",0.12511,6,60,TRUE,0.37785
+2,"6",0.24383,4,"60",-1.00257,4,"200 level, midcourt",1.01148,2,"Hot dog and soda with each ticket",0.17428,6,60,TRUE,0.42702
+2,"6",0.24383,4,"60",-1.00257,4,"200 level, midcourt",1.01148,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,6,60,TRUE,0.25432
+2,"6",0.24383,4,"60",-1.00257,4,"200 level, midcourt",1.01148,4,"$20 gift certificate for popular local restaurant",0.01689,6,60,TRUE,0.26963
+2,"6",0.24383,4,"60",-1.00257,4,"200 level, midcourt",1.01148,5,"No promotional item",-0.31786,6,60,TRUE,-0.06512
+3,"10",-0.2764,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,10,15,TRUE,-0.22652
+3,"10",-0.2764,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,10,15,TRUE,-0.17735
+3,"10",-0.2764,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,15,TRUE,-0.35005
+3,"10",-0.2764,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,10,15,TRUE,-0.33474
+3,"10",-0.2764,1,"15",0.65646,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,10,15,TRUE,-0.66949
+3,"10",-0.2764,1,"15",0.65646,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,10,15,TRUE,0.0680100000000001
+3,"10",-0.2764,1,"15",0.65646,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,10,15,TRUE,0.11718
+3,"10",-0.2764,1,"15",0.65646,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,15,TRUE,-0.0555199999999999
+3,"10",-0.2764,1,"15",0.65646,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,10,15,TRUE,-0.0402099999999999
+3,"10",-0.2764,1,"15",0.65646,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,10,15,TRUE,-0.37496
+3,"10",-0.2764,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,10,25,TRUE,-0.66287
+3,"10",-0.2764,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,10,25,TRUE,-0.6137
+3,"10",-0.2764,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,25,TRUE,-0.7864
+3,"10",-0.2764,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,10,25,TRUE,-0.77109
+3,"10",-0.2764,2,"25",0.22011,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,10,25,TRUE,-1.10584
+3,"10",-0.2764,2,"25",0.22011,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,10,25,TRUE,-0.36834
+3,"10",-0.2764,2,"25",0.22011,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,10,25,TRUE,-0.31917
+3,"10",-0.2764,2,"25",0.22011,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,25,TRUE,-0.49187
+3,"10",-0.2764,2,"25",0.22011,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,10,25,TRUE,-0.47656
+3,"10",-0.2764,2,"25",0.22011,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,10,25,TRUE,-0.81131
+3,"10",-0.2764,2,"25",0.22011,3,"300 level, midcourt",0.15736,1,"Priority for home playoff tickets",0.12511,10,25,TRUE,0.22618
+3,"10",-0.2764,2,"25",0.22011,3,"300 level, midcourt",0.15736,2,"Hot dog and soda with each ticket",0.17428,10,25,TRUE,0.27535
+3,"10",-0.2764,2,"25",0.22011,3,"300 level, midcourt",0.15736,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,25,TRUE,0.10265
+3,"10",-0.2764,2,"25",0.22011,3,"300 level, midcourt",0.15736,4,"$20 gift certificate for popular local restaurant",0.01689,10,25,TRUE,0.11796
+3,"10",-0.2764,2,"25",0.22011,3,"300 level, midcourt",0.15736,5,"No promotional item",-0.31786,10,25,TRUE,-0.21679
+3,"10",-0.2764,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,10,35,TRUE,-0.75698
+3,"10",-0.2764,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,10,35,TRUE,-0.70781
+3,"10",-0.2764,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,35,TRUE,-0.88051
+3,"10",-0.2764,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,10,35,TRUE,-0.8652
+3,"10",-0.2764,3,"35",0.126,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,10,35,TRUE,-1.19995
+3,"10",-0.2764,3,"35",0.126,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,10,35,TRUE,-0.46245
+3,"10",-0.2764,3,"35",0.126,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,10,35,TRUE,-0.41328
+3,"10",-0.2764,3,"35",0.126,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,35,TRUE,-0.58598
+3,"10",-0.2764,3,"35",0.126,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,10,35,TRUE,-0.57067
+3,"10",-0.2764,3,"35",0.126,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,10,35,TRUE,-0.90542
+3,"10",-0.2764,3,"35",0.126,3,"300 level, midcourt",0.15736,1,"Priority for home playoff tickets",0.12511,10,35,TRUE,0.13207
+3,"10",-0.2764,3,"35",0.126,3,"300 level, midcourt",0.15736,2,"Hot dog and soda with each ticket",0.17428,10,35,TRUE,0.18124
+3,"10",-0.2764,3,"35",0.126,3,"300 level, midcourt",0.15736,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,35,TRUE,0.00854000000000002
+3,"10",-0.2764,3,"35",0.126,3,"300 level, midcourt",0.15736,4,"$20 gift certificate for popular local restaurant",0.01689,10,35,TRUE,0.02385
+3,"10",-0.2764,3,"35",0.126,3,"300 level, midcourt",0.15736,5,"No promotional item",-0.31786,10,35,TRUE,-0.3109
+3,"10",-0.2764,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,1,"Priority for home playoff tickets",0.12511,10,60,TRUE,-1.88555
+3,"10",-0.2764,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,2,"Hot dog and soda with each ticket",0.17428,10,60,TRUE,-1.83638
+3,"10",-0.2764,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,60,TRUE,-2.00908
+3,"10",-0.2764,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,4,"$20 gift certificate for popular local restaurant",0.01689,10,60,TRUE,-1.99377
+3,"10",-0.2764,4,"60",-1.00257,1,"300 level, behind the baskets",-0.73169,5,"No promotional item",-0.31786,10,60,TRUE,-2.32852
+3,"10",-0.2764,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,1,"Priority for home playoff tickets",0.12511,10,60,TRUE,-1.59102
+3,"10",-0.2764,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,2,"Hot dog and soda with each ticket",0.17428,10,60,TRUE,-1.54185
+3,"10",-0.2764,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,60,TRUE,-1.71455
+3,"10",-0.2764,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,4,"$20 gift certificate for popular local restaurant",0.01689,10,60,TRUE,-1.69924
+3,"10",-0.2764,4,"60",-1.00257,2,"300 level, on the corners",-0.43716,5,"No promotional item",-0.31786,10,60,TRUE,-2.03399
+3,"10",-0.2764,4,"60",-1.00257,3,"300 level, midcourt",0.15736,1,"Priority for home playoff tickets",0.12511,10,60,TRUE,-0.9965
+3,"10",-0.2764,4,"60",-1.00257,3,"300 level, midcourt",0.15736,2,"Hot dog and soda with each ticket",0.17428,10,60,TRUE,-0.94733
+3,"10",-0.2764,4,"60",-1.00257,3,"300 level, midcourt",0.15736,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,60,TRUE,-1.12003
+3,"10",-0.2764,4,"60",-1.00257,3,"300 level, midcourt",0.15736,4,"$20 gift certificate for popular local restaurant",0.01689,10,60,TRUE,-1.10472
+3,"10",-0.2764,4,"60",-1.00257,3,"300 level, midcourt",0.15736,5,"No promotional item",-0.31786,10,60,TRUE,-1.43947
+3,"10",-0.2764,4,"60",-1.00257,4,"200 level, midcourt",1.01148,1,"Priority for home playoff tickets",0.12511,10,60,TRUE,-0.14238
+3,"10",-0.2764,4,"60",-1.00257,4,"200 level, midcourt",1.01148,2,"Hot dog and soda with each ticket",0.17428,10,60,TRUE,-0.09321
+3,"10",-0.2764,4,"60",-1.00257,4,"200 level, midcourt",1.01148,3,"Trail Blazer apparel (hat, jersey, etc.)",0.00158,10,60,TRUE,-0.26591
+3,"10",-0.2764,4,"60",-1.00257,4,"200 level, midcourt",1.01148,4,"$20 gift certificate for popular local restaurant",0.01689,10,60,TRUE,-0.2506
+3,"10",-0.2764,4,"60",-1.00257,4,"200 level, midcourt",1.01148,5,"No promotional item",-0.31786,10,60,TRUE,-0.58535

@@ -1,0 +1,11 @@
+"check","passed"
+"Source levels equal 16",TRUE
+"Theoretical combinations equal 240",TRUE
+"Feasible packages equal 180",TRUE
+"All seat-price restrictions satisfied",TRUE
+"Additive utility reconciles",TRUE
+"Package revenue reconciles",TRUE
+"Contribution A reconciles",TRUE
+"Contribution B reconciles",TRUE
+"Preference leader matches highest utility",TRUE
+"All 18 cost scenarios present",TRUE

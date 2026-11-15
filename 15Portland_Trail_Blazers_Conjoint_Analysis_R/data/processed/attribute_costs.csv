@@ -1,0 +1,10 @@
+"attribute","level_label","cost_usd","utility"
+"Ticket Location","300 level, behind the baskets",10,-0.73169
+"Ticket Location","300 level, on the corners",12,-0.43716
+"Ticket Location","300 level, midcourt",18,0.15736
+"Ticket Location","200 level, midcourt",40,1.01148
+"Promotional Item","Priority for home playoff tickets",0,0.12511
+"Promotional Item","Hot dog and soda with each ticket",3.25,0.17428
+"Promotional Item","Trail Blazer apparel (hat, jersey, etc.)",12,0.00158
+"Promotional Item","$20 gift certificate for popular local restaurant",10,0.01689
+"Promotional Item","No promotional item",0,-0.31786

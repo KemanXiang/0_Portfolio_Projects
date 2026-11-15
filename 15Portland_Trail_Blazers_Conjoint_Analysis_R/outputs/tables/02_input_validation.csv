@@ -1,0 +1,9 @@
+"check","passed"
+"Four attributes and 16 levels",TRUE
+"Correct number of levels per attribute",TRUE
+"Unique attribute-level identifiers",TRUE
+"All utilities are finite",TRUE
+"Expected game-count levels",TRUE
+"Expected ticket-price levels",TRUE
+"Price utility decreases with price",TRUE
+"Part-worths approximately centered by attribute",TRUE

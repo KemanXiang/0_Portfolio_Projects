@@ -1,0 +1,6 @@
+"decision_objective","package_id","games_n","price_usd","seat_id","promo_id","utility","contribution_A","contribution_B"
+"Consumer utility","PKG077",6,25,3,2,0.79558,38.75,22.5
+"Contribution per package: promotion once","PKG012",10,60,1,1,-1.88555,500,500
+"Contribution per package: promotion per game","PKG012",10,60,1,1,-1.88555,500,500
+"Contribution per game: promotion once","PKG011",6,60,1,1,-1.36532,300,300
+"Contribution per game: promotion per game","PKG011",6,60,1,1,-1.36532,300,300
